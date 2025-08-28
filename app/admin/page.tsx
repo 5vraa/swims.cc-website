@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdvancedDashboard } from "@/components/advanced-dashboard"
+import { AdminGuard } from "@/components/admin-guard"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Users, FileText, Gift, BarChart3, Settings, Shield } from "lucide-react"
+import Link from "next/link"
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboard() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -12,16 +16,6 @@ export default async function AdminDashboardPage() {
     redirect("/auth/login")
   }
 
-  return <AdvancedDashboard profile={{}} analytics={{}} />
-}
-
-import { AdminGuard } from "@/components/admin-guard"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Users, FileText, Gift, BarChart3, Settings, Shield } from "lucide-react"
-import Link from "next/link"
-
-export default function AdminDashboard() {
   return (
     <AdminGuard>
       <div className="container mx-auto p-6">
