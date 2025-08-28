@@ -29,9 +29,11 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  // FIXED: Use getSession() instead of getUser() for @supabase/ssr
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user
+  // FIX: Use getUser() with TypeScript ignore for older versions
+  // @ts-ignore - Older Supabase version
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (
     !user &&
@@ -48,7 +50,6 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/status") &&
     !request.nextUrl.pathname.match(/^\/[a-zA-Z0-9_-]+$/) // Allow public profile pages
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
