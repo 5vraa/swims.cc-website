@@ -31,9 +31,8 @@ export async function updateSession(request: NextRequest) {
 
   // FIX: Use getUser() with TypeScript ignore for older versions
   // @ts-ignore - Older Supabase version
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const response = await supabase.auth.getUser()
+  const { user } = response.data
 
   if (
     !user &&
