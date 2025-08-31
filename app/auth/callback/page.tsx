@@ -24,11 +24,47 @@ export default function AuthCallbackPage() {
       setStatus("loading")
       setMessage("Processing authentication...")
 
-      // Get the session from the URL hash/fragment
-      const { data: { session }, error } = await supabase.auth.getSession()
+      // Check if this is a Discord OAuth callback
+      const provider = searchParams.get('provider')
+      const error = searchParams.get('error')
+      
+      if (error) {
+        throw new Error(`Authentication failed: ${error}`)
+      }
 
-      if (error || !session) {
-        throw new Error("Failed to get session")
+      if (provider === 'discord') {
+        setMessage("Processing Discord authentication...")
+      }
+
+      // Wait a bit for OAuth session to be established
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Try to get session multiple times for OAuth flows
+      let session = null
+      let attempts = 0
+      const maxAttempts = 5
+
+      while (!session && attempts < maxAttempts) {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error("Session error:", error)
+        }
+        
+        if (currentSession) {
+          session = currentSession
+          break
+        }
+        
+        attempts++
+        if (attempts < maxAttempts) {
+          console.log(`Session attempt ${attempts}/${maxAttempts}, waiting...`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      }
+
+      if (!session) {
+        throw new Error("Failed to get session after multiple attempts")
       }
 
       const user = session.user
