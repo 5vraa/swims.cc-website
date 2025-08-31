@@ -38,10 +38,10 @@ export default function ExplorePage() {
   const loadProfiles = async () => {
     try {
       setLoading(true)
+      setError(null)
       const supabase = createClient()
 
-      // Add caching key for better performance
-      const cacheKey = `profiles_${filter}_${sortBy}`
+      console.log("Loading profiles with filter:", filter, "sort:", sortBy)
       
       let query = supabase
         .from("profiles")
@@ -59,7 +59,7 @@ export default function ExplorePage() {
           created_at
         `)
         .eq("is_public", true)
-        .limit(50) // Limit early for better performance
+        .limit(50)
 
       // Apply filters
       if (filter === "verified") {
@@ -77,9 +77,43 @@ export default function ExplorePage() {
 
       const { data, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error("Supabase query error:", error)
+        throw error
+      }
 
-      setProfiles(data || [])
+      console.log("Profiles loaded:", data?.length || 0, "profiles")
+      console.log("Sample profile:", data?.[0])
+      
+      // If no public profiles found, try to get all profiles for demo
+      if (!data || data.length === 0) {
+        console.log("No public profiles found, trying to get all profiles...")
+        const { data: allProfiles, error: allError } = await supabase
+          .from("profiles")
+          .select(`
+            id,
+            username,
+            display_name,
+            bio,
+            avatar_url,
+            background_color,
+            background_image_url,
+            view_count,
+            is_verified,
+            is_premium,
+            created_at
+          `)
+          .limit(20)
+        
+        if (!allError && allProfiles) {
+          console.log("Found", allProfiles.length, "total profiles")
+          setProfiles(allProfiles)
+        } else {
+          setProfiles([])
+        }
+      } else {
+        setProfiles(data)
+      }
     } catch (error) {
       console.error("Error loading profiles:", error)
       setError("Failed to load profiles")
@@ -183,25 +217,35 @@ export default function ExplorePage() {
               Discover the most popular and trending bio profiles on the platform
             </p>
             
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-                <div className="text-3xl font-bold text-white mb-2">{profiles.length}</div>
-                <div className="text-gray-400">Active Profiles</div>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-                <div className="text-3xl font-bold text-white mb-2">
-                  {formatNumber(profiles.reduce((sum, p) => sum + (p.view_count || 0), 0))}
-                </div>
-                <div className="text-gray-400">Total Views</div>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
-                <div className="text-3xl font-bold text-white mb-2">
-                  0
-                </div>
-                <div className="text-gray-400">Total Likes</div>
-              </div>
-            </div>
+                         {/* Stats */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+               <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
+                 <div className="text-3xl font-bold text-white mb-2">{profiles.length}</div>
+                 <div className="text-gray-400">Active Profiles</div>
+               </div>
+               <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
+                 <div className="text-3xl font-bold text-white mb-2">
+                   {formatNumber(profiles.reduce((sum, p) => sum + (p.view_count || 0), 0))}
+                 </div>
+                 <div className="text-gray-400">Total Views</div>
+               </div>
+               <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
+                 <div className="text-3xl font-bold text-white mb-2">
+                   {profiles.filter(p => p.is_verified).length}
+                 </div>
+                 <div className="text-gray-400">Verified Profiles</div>
+               </div>
+             </div>
+             
+             {/* Debug Info - Remove this in production */}
+             {process.env.NODE_ENV === 'development' && (
+               <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-8">
+                 <p className="text-yellow-200 text-sm">
+                   <strong>Debug:</strong> Found {profiles.length} profiles. 
+                   {profiles.length > 0 && ` First profile: ${profiles[0]?.username || 'Unknown'}`}
+                 </p>
+               </div>
+             )}
           </div>
         </div>
       </div>
@@ -345,19 +389,35 @@ export default function ExplorePage() {
             ))}
           </div>
 
-          {/* Empty State */}
-          {profiles.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gray-800/50 rounded-full flex items-center justify-center">
-                <Users className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No profiles found</h3>
-              <p className="text-gray-400 mb-6">Try adjusting your filters or check back later</p>
-              <Button onClick={loadProfiles} variant="outline">
-                Refresh
-              </Button>
-            </div>
-          )}
+                     {/* Empty State */}
+           {profiles.length === 0 && (
+             <div className="text-center py-16">
+               <div className="w-24 h-24 mx-auto mb-6 bg-gray-800/50 rounded-full flex items-center justify-center">
+                 <Users className="w-12 h-12 text-gray-400" />
+               </div>
+               <h3 className="text-xl font-semibold text-white mb-2">No profiles found</h3>
+               <p className="text-gray-400 mb-6">
+                 {filter !== "all" 
+                   ? `No ${filter} profiles available. Try "All Profiles" instead.`
+                   : "No profiles have been created yet. Be the first to create one!"
+                 }
+               </p>
+               <div className="flex gap-3 justify-center">
+                 <Button onClick={loadProfiles} variant="outline">
+                   Refresh
+                 </Button>
+                 {filter !== "all" && (
+                   <Button 
+                     onClick={() => setFilter("all")} 
+                     variant="default"
+                     className="bg-red-600 hover:bg-red-700"
+                   >
+                     Show All Profiles
+                   </Button>
+                 )}
+               </div>
+             </div>
+           )}
         </div>
       </div>
       
