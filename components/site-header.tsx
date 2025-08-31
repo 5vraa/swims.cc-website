@@ -145,15 +145,15 @@ export function SiteHeader() {
             <div className="hidden md:flex items-center space-x-4">
               {!user ? (
                 <>
-                  <Link href="/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
-                  <Link href="/help" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Help Center</Link>
-                  <Link href="/pricing" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Pricing</Link>
+                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
+                  <Link href="/page/help" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Help Center</Link>
+                  <Link href="/page/pricing" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Pricing</Link>
                   <Link href="/auth/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Login</Link>
                   <Link href="/auth/signup" className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">Sign Up Free</Link>
                 </>
               ) : (
                 <>
-                  <Link href="/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
+                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
                   {username && (
                     <Link href={`/${username}`} className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">Preview Profile</Link>
                   )}

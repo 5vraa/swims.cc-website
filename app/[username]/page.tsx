@@ -223,10 +223,45 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-xl text-muted-foreground">Loading profile...</p>
+      <div className="min-h-screen bg-gradient-to-br from-red-500/20 via-purple-500/20 to-blue-500/20">
+        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="relative z-10 h-full flex items-center justify-center px-4 py-8">
+          <div className="max-w-2xl w-full text-center">
+            {/* Animated Profile Card Skeleton */}
+            <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 animate-pulse">
+              {/* Avatar Skeleton */}
+              <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-6 animate-pulse"></div>
+              
+              {/* Name Skeleton */}
+              <div className="h-8 bg-gray-600 rounded w-48 mx-auto mb-4 animate-pulse"></div>
+              
+              {/* Bio Skeleton */}
+              <div className="space-y-2 mb-6">
+                <div className="h-4 bg-gray-600 rounded w-full mx-auto"></div>
+                <div className="h-4 bg-gray-600 rounded w-3/4 mx-auto"></div>
+              </div>
+              
+              {/* Badges Skeleton */}
+              <div className="flex justify-center gap-2 mb-6">
+                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
+                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
+                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
+              </div>
+              
+              {/* Button Skeleton */}
+              <div className="h-12 bg-gray-600 rounded w-32 mx-auto animate-pulse"></div>
+              
+              {/* Loading Text */}
+              <div className="mt-6">
+                <div className="flex justify-center space-x-2 mb-2">
+                  <div className="w-2 h-2 bg-red-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+                <p className="text-gray-300 text-sm">Loading amazing profile...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )

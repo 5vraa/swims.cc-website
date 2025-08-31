@@ -40,6 +40,9 @@ export default function ExplorePage() {
       setLoading(true)
       const supabase = createClient()
 
+      // Add caching key for better performance
+      const cacheKey = `profiles_${filter}_${sortBy}`
+      
       let query = supabase
         .from("profiles")
         .select(`
@@ -51,12 +54,12 @@ export default function ExplorePage() {
           background_color,
           background_image_url,
           view_count,
-  
           is_verified,
           is_premium,
           created_at
         `)
         .eq("is_public", true)
+        .limit(50) // Limit early for better performance
 
       // Apply filters
       if (filter === "verified") {
@@ -65,14 +68,14 @@ export default function ExplorePage() {
         query = query.eq("is_premium", true)
       }
 
-            // Apply sorting
+      // Apply sorting
       if (sortBy === "views") {
         query = query.order("view_count", { ascending: false })
       } else if (sortBy === "newest") {
         query = query.order("created_at", { ascending: false })
       }
 
-      const { data, error } = await query.limit(50)
+      const { data, error } = await query
 
       if (error) throw error
 
@@ -108,10 +111,46 @@ export default function ExplorePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Discovering amazing profiles...</p>
+      <div className="min-h-screen bg-gradient-to-br from-red-500/20 via-purple-500/20 to-blue-500/20">
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div className="relative z-10 px-6 py-16 text-center">
+          <div className="max-w-4xl mx-auto">
+            {/* Animated Loading Header */}
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 animate-pulse">
+                Exploring Amazing Profiles
+              </h1>
+              <div className="flex justify-center space-x-2">
+                <div className="w-3 h-3 bg-red-400 rounded-full animate-bounce"></div>
+                <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+            </div>
+            
+            {/* Loading Skeleton Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-black/20 backdrop-blur-md border border-gray-700/50 rounded-xl p-6 animate-pulse">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-16 h-16 bg-gray-600 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-600 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-600 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-600 rounded"></div>
+                    <div className="h-3 bg-gray-600 rounded w-5/6"></div>
+                  </div>
+                  <div className="mt-4 flex justify-between">
+                    <div className="h-3 bg-gray-600 rounded w-16"></div>
+                    <div className="h-3 bg-gray-600 rounded w-20"></div>
+                  </div>
+                  <div className="mt-4 h-10 bg-gray-600 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
