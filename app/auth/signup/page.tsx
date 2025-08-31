@@ -42,7 +42,7 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+          emailRedirectTo: "https://lzgwyvowwanirtolefpj.supabase.co/auth/v1/callback",
           data: {
             username: username,
           },
