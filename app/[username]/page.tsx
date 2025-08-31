@@ -4,41 +4,95 @@ import React, { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { AnimatedProfile } from "@/components/animated-profile"
-import { RevealPage } from "@/components/reveal-page"
+import { Badge } from "@/components/badge"
+import { MusicPlayer } from "@/components/music-player"
+import { SocialLinksDisplay } from "@/components/social-links-display"
+
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { 
+  Heart, 
+  Eye, 
+  Music, 
+  Link as LinkIcon, 
+  Star,
+  Calendar,
+  MapPin,
+  Globe,
+  Mail,
+  Phone,
+  MessageCircle
+} from "lucide-react"
 
 interface Profile {
   id: string
-  user_id: string
   username: string
   display_name: string | null
   bio: string | null
   avatar_url: string | null
   background_color: string
   background_image_url: string | null
+  theme: string
   is_public: boolean
-  reveal_type: "none" | "age" | "content" | "nsfw" | "custom"
-  reveal_title: string | null
-  reveal_description: string | null
-  reveal_min_age: number
-  reveal_custom_message: string | null
+  is_premium: boolean
+  is_verified: boolean
+  role: string | null
   view_count: number
+  like_count: number
+  created_at: string
+  card_outline_color: string
+  card_glow_color: string
+  card_glow_intensity: number
+  border_radius: number
+  font_family: string
+  font_size: string
+  font_color: string
 }
 
-interface MusicData {
-  tracks: any[]
-  settings: any
+interface SocialLink {
+  id: string
+  platform: string
+  url: string
+  display_name: string
+  icon: string
+  order_index: number
+  is_active: boolean
+}
+
+interface MusicTrack {
+  id: string
+  title: string
+  artist?: string
+  audio_url: string
+  cover_image_url?: string
+  duration?: number
+}
+
+interface Badge {
+  id: string
+  name: string
+  display_name: string
+  description: string
+  color: string
+  icon: string
+  is_active: boolean
+  created_at: string
+}
+
+interface UserBadge {
+  id: string
+  badge: Badge
+  awarded_at: string
 }
 
 export default function PublicProfilePage({ params }: { params: { username: string } }) {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [socialLinks, setSocialLinks] = useState<any[]>([])
-  const [musicData, setMusicData] = useState<MusicData | null>(null)
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([])
+  const [userBadges, setUserBadges] = useState<UserBadge[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isRevealed, setIsRevealed] = useState(false)
+  const [liked, setLiked] = useState(false)
   const supabase = createClient()
   const { username } = (React as any).use ? (React as any).use(params) : params
   const normalizedUsername = typeof username === "string" ? username.trim().toLowerCase() : ""
@@ -46,6 +100,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
   const reservedRoutes = new Set([
     "auth",
     "admin",
+    "staff",
     "privacy",
     "terms",
     "changelog",
@@ -54,6 +109,10 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     "redeem",
     "profile",
     "dashboard",
+    "explore",
+    "pricing",
+    "help",
+
   ])
 
   useEffect(() => {
@@ -61,13 +120,22 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       notFound()
       return
     }
-    // Debug: verify which username is being resolved
-    try { console.debug("PublicProfilePage username:", normalizedUsername) } catch {}
     loadProfile()
   }, [normalizedUsername])
 
+  // Prevent body scrolling when profile page is open
+  useEffect(() => {
+    document.body.classList.add('profile-page-open')
+    
+    return () => {
+      document.body.classList.remove('profile-page-open')
+    }
+  }, [])
+
   const loadProfile = async () => {
     try {
+      setLoading(true)
+      
       // Get profile by username
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -77,7 +145,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         .maybeSingle()
 
       if (profileError) {
-        try { console.error("Supabase profile error:", profileError) } catch {}
+        console.error("Supabase profile error:", profileError)
         if (profileError.code === "PGRST116") {
           notFound()
         }
@@ -90,49 +158,84 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
       setProfile(profileData)
 
-      const socialResponse = await fetch(`/api/social-links/public/${profileData.user_id}`)
-      if (socialResponse.ok) {
-        const socialData = await socialResponse.json()
+      // Load social links
+      const { data: socialData, error: socialError } = await supabase
+        .from("social_links")
+        .select("*")
+        .eq("user_id", profileData.user_id)
+        .eq("is_active", true)
+        .order("order_index")
+
+      if (!socialError && socialData) {
         setSocialLinks(socialData)
       }
 
-      // Load music data
-      const musicResponse = await fetch(`/api/music/public/${profileData.user_id}`)
-      if (musicResponse.ok) {
-        const musicData = await musicResponse.json()
-        setMusicData(musicData)
+      // Load music tracks
+      const { data: musicData, error: musicError } = await supabase
+        .from("music_tracks")
+        .select("*")
+        .eq("user_id", profileData.user_id)
+        .eq("is_active", true)
+        .order("order_index")
+
+      if (!musicError && musicData) {
+        setMusicTracks(musicData)
       }
 
-      await fetch("/api/analytics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profile_id: profileData.id,
-          event_type: "profile_view",
-        }),
-      })
+      // Load user badges
+      const { data: badgesData, error: badgesError } = await supabase
+        .from("user_badges")
+        .select(`
+          id,
+          awarded_at,
+          badge:badges(*)
+        `)
+        .eq("user_id", profileData.user_id)
 
-      if (profileData.reveal_type === "none") {
-        setIsRevealed(true)
+      if (!badgesError && badgesData) {
+        setUserBadges(badgesData)
       }
-    } catch (error) {
-      console.error("Error loading profile:", error)
+
+      // Increment view count
+      await supabase
+        .from("profiles")
+        .update({ view_count: (profileData.view_count || 0) + 1 })
+        .eq("id", profileData.id)
+
+    } catch (err) {
+      console.error("Error loading profile:", err)
       setError("Failed to load profile")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleReveal = () => {
-    setIsRevealed(true)
+  const handleLike = async () => {
+    if (!profile) return
+    
+    try {
+      const newLikeCount = liked ? profile.like_count - 1 : profile.like_count + 1
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update({ like_count: newLikeCount })
+        .eq("id", profile.id)
+
+      if (!error) {
+        setProfile(prev => prev ? { ...prev, like_count: newLikeCount } : null)
+        setLiked(!liked)
+      }
+    } catch (err) {
+      console.error("Error updating like count:", err)
+    }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading profile...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-xl text-muted-foreground">Loading profile...</p>
         </div>
       </div>
     )
@@ -140,40 +243,217 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
-        <Card className="w-full max-w-md bg-black/40 backdrop-blur-xl border-red-500/20">
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-400 mb-4">Profile not found or not public</p>
-            <Button asChild className="bg-red-600 hover:bg-red-700">
-              <Link href="/">Go Home</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">Profile Not Found</h1>
+          <p className="text-muted-foreground mb-4">{error || "This profile doesn't exist or is private."}</p>
+          <Link href="/" className="text-primary hover:underline">
+            Return to Home
+          </Link>
+        </div>
       </div>
     )
   }
 
-  if (!isRevealed && profile.reveal_type !== "none") {
-    return (
-      <RevealPage
-        type={profile.reveal_type}
-        title={profile.reveal_title || undefined}
-        description={profile.reveal_description || undefined}
-        minAge={profile.reveal_min_age || 18}
-        customMessage={profile.reveal_custom_message || undefined}
-        onReveal={handleReveal}
-      >
-        <div />
-      </RevealPage>
-    )
-  }
-
   return (
-    <AnimatedProfile
-      profile={profile}
-      socialLinks={socialLinks}
-      musicTracks={musicData?.tracks || []}
-      musicSettings={musicData?.settings}
-    />
+    <div className="profile-page-fixed h-screen bg-background text-foreground overflow-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 w-full h-full pointer-events-none -z-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: profile?.background_image_url ? `url(${profile.background_image_url})` : 'none',
+            backgroundColor: profile?.background_color || '#0a0a0a'
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-black/60"></div>
+      </div>
+
+      {/* Profile Content - Fixed height container */}
+      <div className="relative z-10 h-full flex items-center justify-center px-4 py-8">
+        <div className="max-w-2xl w-full max-h-full">
+          {/* Main Profile Card */}
+          <Card 
+            className="profile-card-custom bg-card/80 backdrop-blur-sm border-border shadow-xl"
+            style={{
+              borderColor: profile?.card_outline_color || '#ef4444',
+              boxShadow: profile?.card_glow_color && profile?.card_glow_intensity ? 
+                `0 0 ${20 * (profile.card_glow_intensity || 0.5)}px ${profile.card_glow_color}` : 
+                '0 0 20px rgba(239, 68, 68, 0.5)',
+              borderRadius: `${profile?.border_radius || 12}px`
+            }}
+          >
+            <CardContent className="p-6">
+              <div className="text-center">
+                {/* Avatar */}
+                {profile?.avatar_url ? (
+                  <div className="mb-4">
+                    <img
+                      src={profile.avatar_url}
+                      alt={`${profile.display_name || profile.username}'s avatar`}
+                      className="w-24 h-24 rounded-full mx-auto border-4 border-primary shadow-lg"
+                      style={{
+                        borderColor: profile?.card_outline_color || '#ef4444'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <div 
+                      className="w-24 h-24 rounded-full mx-auto border-4 bg-muted flex items-center justify-center"
+                      style={{
+                        borderColor: profile?.card_outline_color || '#ef4444'
+                      }}
+                    >
+                      <span 
+                        className="text-3xl font-bold text-muted-foreground"
+                        style={{
+                          fontFamily: profile?.font_family || 'Inter',
+                          fontSize: profile?.font_size || '16px',
+                          color: profile?.font_color || '#ffffff'
+                        }}
+                      >
+                        {profile.username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Profile Info */}
+                <div className="mb-4">
+                  <h1 
+                    className="text-2xl font-bold text-card-foreground mb-2"
+                    style={{
+                      fontFamily: profile?.font_family || 'Inter',
+                      fontSize: profile?.font_size || '16px',
+                      color: profile?.font_color || '#ffffff'
+                    }}
+                  >
+                    {profile?.display_name || profile?.username}
+                  </h1>
+                  
+                  {profile?.bio && (
+                    <p 
+                      className="text-muted-foreground text-sm max-w-lg mx-auto"
+                      style={{
+                        fontFamily: profile?.font_family || 'Inter',
+                        fontSize: profile?.font_size || '16px',
+                        color: profile?.font_color || '#ffffff'
+                      }}
+                    >
+                      {profile.bio}
+                    </p>
+                  )}
+
+                  {/* Badges */}
+                  {userBadges.length > 0 && (
+                    <div className="mt-3 flex flex-wrap justify-center gap-1">
+                      {userBadges.map((userBadge) => (
+                        <Badge
+                          key={userBadge.id}
+                          badge={userBadge.badge}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap justify-center gap-3 mb-4">
+                  <Button
+                    onClick={handleLike}
+                    variant={liked ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center gap-2"
+                    style={{
+                      backgroundColor: liked ? (profile?.card_outline_color || '#ef4444') : 'transparent',
+                      borderColor: profile?.card_outline_color || '#ef4444',
+                      color: liked ? '#ffffff' : (profile?.card_outline_color || '#ef4444')
+                    }}
+                  >
+                    <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
+                    {profile.like_count || 0}
+                  </Button>
+
+                  {/* Removed reveal button */}
+                </div>
+
+                {/* Stats */}
+                <div className="flex justify-center gap-6 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {profile?.view_count || 0} views
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    {profile?.like_count || 0} likes
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Joined {new Date(profile.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Links & Music - Compact */}
+          {(socialLinks.length > 0 || musicTracks.length > 0) && (
+            <Card 
+              className="bg-card/80 backdrop-blur-sm border-border mt-4"
+              style={{
+                borderColor: profile?.card_outline_color || '#ef4444',
+                boxShadow: profile?.card_glow_color && profile?.card_glow_intensity ? 
+                  `0 0 ${15 * (profile.card_glow_intensity || 0.5)}px ${profile.card_glow_color}` : 
+                  '0 0 15px rgba(239, 68, 68, 0.3)',
+                borderRadius: `${profile?.border_radius || 12}px`
+              }}
+            >
+              <CardContent className="p-4">
+                {/* Social Links */}
+                {socialLinks.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-card-foreground mb-2 text-center">
+                      Connect with {profile.display_name || profile.username}
+                    </h3>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {socialLinks.map((link) => (
+                        <Link
+                          key={link.id}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs hover:bg-primary/90 transition-all duration-200 hover:scale-105"
+                          style={{
+                            backgroundColor: profile?.card_outline_color || '#ef4444',
+                            color: '#ffffff'
+                          }}
+                        >
+                          {link.icon && <span>{link.icon}</span>}
+                          {link.display_name || link.platform}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Music Player */}
+                {musicTracks.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-card-foreground mb-2 text-center flex items-center justify-center gap-1">
+                      <Music className="w-3 h-3" />
+                      Music
+                    </h3>
+                    <div className="text-center text-xs text-muted-foreground">
+                      {musicTracks.length} track{musicTracks.length !== 1 ? 's' : ''} available
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

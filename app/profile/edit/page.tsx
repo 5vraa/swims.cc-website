@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,14 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { FileUpload } from "@/components/file-upload"
 import { SocialLinksManager } from "@/components/social-links-manager"
 import { MusicManager } from "@/components/music-manager"
-import { User, LinkIcon, Music, Palette, Settings, Eye } from "lucide-react"
+import { BadgeSelector } from "@/components/badge-selector"
+import { SpotifyIntegration } from "@/components/spotify-integration"
+import { User, LinkIcon, Music, Palette, Settings, Eye, Crown, Star, MessageCircle, Zap, Shield, Bell, Heart } from "lucide-react"
 
 interface Profile {
   id: string
@@ -28,6 +28,44 @@ interface Profile {
   background_image_url: string | null
   theme: string
   is_public: boolean
+  is_premium: boolean
+  is_verified: boolean
+  discord_id: string | null
+  discord_username: string | null
+  discord_authorized: boolean
+  spotify_connected: boolean
+  spotify_username: string | null
+  roblox_username: string | null
+  github_username: string | null
+  twitter_username: string | null
+  instagram_username: string | null
+  youtube_channel: string | null
+  twitch_username: string | null
+  tiktok_username: string | null
+  role: string | null
+  view_count: number
+  like_count: number
+  featured_badge_id: string | null
+  card_outline_color: string
+  card_glow_color: string
+  card_glow_intensity: number
+  background_blur: number
+  font_family: string
+  font_size: string
+  font_color: string
+  hover_effects: boolean
+  parallax_effects: boolean
+  particle_effects: boolean
+  reveal_enabled: boolean
+  reveal_title: string
+  reveal_message: string
+  reveal_button: string
+  steam_username: string | null
+  epic_games_username: string | null
+  battlenet_username: string | null
+  discord_nitro: boolean | null
+  reddit_username: string | null
+  linkedin_username: string | null
 }
 
 export default function EditProfilePage() {
@@ -36,12 +74,20 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("profile")
+  const [discordStatus, setDiscordStatus] = useState<"connected" | "disconnected" | "checking">("checking")
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     loadProfile()
   }, [])
+
+  useEffect(() => {
+    if (profile?.discord_id) {
+      checkDiscordStatus()
+    }
+  }, [profile?.discord_id])
 
   const loadProfile = async () => {
     try {
@@ -57,7 +103,7 @@ export default function EditProfilePage() {
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .maybeSingle()
 
       if (error && (error as any).code !== "PGRST116") throw error
@@ -72,10 +118,25 @@ export default function EditProfilePage() {
         const { data: inserted, error: insertError } = await supabase
           .from("profiles")
           .insert({
-            user_id: user.id,
+            id: user.id,
             username: baseUsername,
             display_name: (user.user_metadata as any)?.display_name || baseUsername,
             is_public: true,
+            background_color: "#000000",
+            card_outline_color: "#ef4444",
+            card_glow_color: "#ef4444",
+            card_glow_intensity: 0.5,
+            background_blur: 0,
+            font_family: "Inter",
+            font_size: "16px",
+            font_color: "#ffffff",
+            hover_effects: true,
+            parallax_effects: true,
+            particle_effects: true,
+            reveal_enabled: true,
+            reveal_title: "Reveal Page",
+            reveal_message: "This is a reveal page",
+            reveal_button: "Reveal"
           })
           .select("*")
           .single()
@@ -100,63 +161,183 @@ export default function EditProfilePage() {
     }
   }
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!profile) return
-
-    setSaving(true)
-    setError(null)
-    setSuccess(null)
+  const checkDiscordStatus = async () => {
+    if (!profile?.discord_id) {
+      setDiscordStatus("disconnected")
+      return
+    }
 
     try {
-      // Update profile in database
+      setDiscordStatus("checking")
+      const response = await fetch('/api/discord/check-role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ discordId: profile.discord_id })
+      })
+
+      if (response.ok) {
+        setDiscordStatus("connected")
+      } else {
+        setDiscordStatus("disconnected")
+      }
+    } catch (error) {
+      console.error('Error checking Discord status:', error)
+      setDiscordStatus("disconnected")
+    }
+  }
+
+  const connectDiscord = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+
+      if (error) throw error
+    } catch (error) {
+      console.error('Error connecting Discord:', error)
+      setError('Failed to connect Discord')
+    }
+  }
+
+  const disconnectDiscord = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          discord_id: null,
+          discord_username: null,
+          discord_authorized: false
+        })
+        .eq('id', profile?.id)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? {
+        ...prev,
+        discord_id: null,
+        discord_username: null,
+        discord_authorized: false
+      } : null)
+
+      setDiscordStatus("disconnected")
+      setSuccess('Discord disconnected successfully')
+    } catch (error) {
+      console.error('Error disconnecting Discord:', error)
+      setError('Failed to disconnect Discord')
+    }
+  }
+
+  const saveProfile = async () => {
+    if (!profile) return
+
+    try {
+      setSaving(true)
+      setError(null)
+      setSuccess(null)
+
       const { error } = await supabase
         .from("profiles")
         .update({
+          username: profile.username,
           display_name: profile.display_name,
           bio: profile.bio,
-          avatar_url: profile.avatar_url,
           background_color: profile.background_color,
           background_image_url: profile.background_image_url,
+          theme: profile.theme,
           is_public: profile.is_public,
-          username: profile.username,
+          card_outline_color: profile.card_outline_color,
+          card_glow_color: profile.card_glow_color,
+          card_glow_intensity: profile.card_glow_intensity,
+          background_blur: profile.background_blur,
+          font_family: profile.font_family,
+          font_size: profile.font_size,
+          font_color: profile.font_color,
+          hover_effects: profile.hover_effects,
+          parallax_effects: profile.parallax_effects,
+          particle_effects: profile.particle_effects,
+          reveal_enabled: profile.reveal_enabled,
+          reveal_title: profile.reveal_title,
+          reveal_message: profile.reveal_message,
+          reveal_button: profile.reveal_button,
+          roblox_username: profile.roblox_username,
+          github_username: profile.github_username,
+          twitter_username: profile.twitter_username,
+          instagram_username: profile.instagram_username,
+          youtube_channel: profile.youtube_channel,
+          twitch_username: profile.twitch_username,
+          tiktok_username: profile.tiktok_username,
+          reddit_username: profile.reddit_username,
+          linkedin_username: profile.linkedin_username,
+          steam_username: profile.steam_username,
+          epic_games_username: profile.epic_games_username,
+          battlenet_username: profile.battlenet_username,
+          discord_nitro: profile.discord_nitro
         })
         .eq("id", profile.id)
 
       if (error) throw error
 
-      setSuccess("Profile updated successfully!")
-
-      // Refresh profile data
-      await loadProfile()
+      setSuccess("Profile saved successfully!")
+      setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
       console.error("Error saving profile:", error)
-      setError("Failed to save profile. Please try again.")
+      setError("Failed to save profile")
     } finally {
       setSaving(false)
     }
   }
 
-  const handleAvatarUpload = (url: string) => {
-    if (profile) {
-      setProfile({ ...profile, avatar_url: url })
-      setSuccess("Avatar uploaded successfully!")
+  const handleAvatarUpload = async (url: string) => {
+    if (!profile) return
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("id", profile.id)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { ...prev, avatar_url: url } : null)
+      setSuccess("Avatar updated successfully!")
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (error) {
+      console.error("Error updating avatar:", error)
+      setError("Failed to update avatar")
     }
   }
 
-  const handleBannerUpload = (url: string) => {
-    if (profile) {
-      setProfile({ ...profile, background_image_url: url })
-      setSuccess("Banner uploaded successfully!")
+  const handleBannerUpload = async (url: string) => {
+    if (!profile) return
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ background_image_url: url })
+        .eq("id", profile.id)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { ...prev, background_image_url: url } : null)
+      setSuccess("Banner updated successfully!")
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (error) {
+      console.error("Error updating banner:", error)
+      setError("Failed to update banner")
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-300 text-lg font-medium">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -164,273 +345,820 @@ export default function EditProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground mb-4">Profile not found</p>
-            <Button asChild>
-              <Link href="/profile/edit">Go to Dashboard</Link>
-            </Button>
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md dashboard-card">
+          <CardContent className="p-8 text-center">
+            <p className="text-red-400 mb-6 text-lg">Profile not found</p>
+            <Button onClick={loadProfile} className="bg-red-600 hover:bg-red-700">Try Again</Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
+  const tabs = [
+    { id: "profile", label: "Profile", icon: User },
+    { id: "appearance", label: "Appearance", icon: Palette },
+    { id: "links", label: "Links", icon: LinkIcon },
+    { id: "music", label: "Music", icon: Music },
+    { id: "badges", label: "Badges", icon: Crown },
+    { id: "spotify", label: "Spotify", icon: Music },
+    { id: "reveal", label: "Reveal", icon: Eye },
+    { id: "settings", label: "Settings", icon: Settings }
+  ]
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">Profile</h1>
+    <div className="min-h-screen px-6 py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Dashboard Header */}
+        <div className="mb-8 animate-in slide-in-from-bottom-2 duration-500 delay-100">
+          <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
+          <p className="text-gray-400 text-lg">Manage your profile and customize your bio page</p>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" />
-              Appearance
-            </TabsTrigger>
-            <TabsTrigger value="links" className="flex items-center gap-2">
-              <LinkIcon className="w-4 h-4" />
-              Links
-            </TabsTrigger>
-            <TabsTrigger value="music" className="flex items-center gap-2">
-              <Music className="w-4 h-4" />
-              Music
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex gap-8">
+          {/* Left Sidebar */}
+          <div className="sticky top-8 dashboard-sidebar rounded-2xl p-6 w-72 h-fit">
+            <div className="space-y-3">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all font-medium ${
+                      activeTab === tab.id
+                        ? "bg-red-600/20 text-red-400 border border-red-500/30 shadow-lg shadow-red-500/10"
+                        : "text-gray-300 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
 
-          <TabsContent value="profile" className="space-y-6">
-            <form onSubmit={handleSave} className="space-y-6">
-              {/* Basic Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>Update your display name and bio</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={profile.username}
-                      onChange={(e) =>
-                        setProfile({
-                          ...profile,
-                          username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
-                        })
-                      }
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Only letters, numbers, and dashes</p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="displayName">Display Name</Label>
-                    <Input
-                      id="displayName"
-                      value={profile.display_name || ""}
-                      onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-                      placeholder="Your display name"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={profile.bio || ""}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                      placeholder="Tell people about yourself..."
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Messages */}
-              {error && <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
-              {success && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{success}</div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-4">
-                <Button type="submit" disabled={saving} className="flex-1">
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/profile/edit">Cancel</Link>
-                </Button>
+            {/* Premium Badge */}
+            {profile.is_premium && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
+                <div className="flex items-center gap-2 text-yellow-400">
+                  <Star className="w-4 h-4" />
+                  <span className="text-sm font-semibold">Premium Member</span>
+                </div>
               </div>
-            </form>
-          </TabsContent>
+            )}
+          </div>
 
-          <TabsContent value="appearance" className="space-y-6">
-            <form onSubmit={handleSave} className="space-y-6">
-              {/* Avatar */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Picture</CardTitle>
-                  <CardDescription>Upload a profile picture</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url || "/placeholder.svg"}
-                        alt="Current avatar"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-border"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                        <span className="text-xl">
-                          {(profile.display_name || profile.username).charAt(0).toUpperCase()}
-                        </span>
+          {/* Right Content Area */}
+          <div className="flex-1 space-y-6">
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 backdrop-blur-sm">
+                {error}
+              </div>
+            )}
+            
+            {success && (
+              <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-400 backdrop-blur-sm">
+                {success}
+              </div>
+            )}
+
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+                {/* Your Badges Section */}
+                <Card className="dashboard-card">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <Crown className="w-6 h-6 text-yellow-400" />
+                      <CardTitle className="text-xl text-white">Your Badges</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Show off your achievements and status
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 dashboard-card rounded-xl text-center">
+                        <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Shield className="w-6 h-6 text-red-400" />
+                        </div>
+                        <h4 className="text-white font-semibold mb-1">Verified</h4>
+                        <p className="text-gray-400 text-sm">Account verified</p>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <FileUpload
-                        type="image"
-                        accept="image/*"
-                        maxSize={5 * 1024 * 1024}
-                        onUpload={handleAvatarUpload}
-                        className="w-full"
-                      />
+                      <div className="p-4 dashboard-card rounded-xl text-center">
+                        <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Star className="w-6 h-6 text-yellow-400" />
+                        </div>
+                        <h4 className="text-white font-semibold mb-1">Premium</h4>
+                        <p className="text-gray-400 text-sm">Premium member</p>
+                      </div>
+                      <div className="p-4 dashboard-card rounded-xl text-center">
+                        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Heart className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <h4 className="text-white font-semibold mb-1">Popular</h4>
+                        <p className="text-gray-400 text-sm">High engagement</p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-              {/* Background */}
-              <Card>
+            {/* Appearance Tab */}
+            {activeTab === "appearance" && (
+              <div
+                key="appearance"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
                 <CardHeader>
-                  <CardTitle>Background</CardTitle>
-                  <CardDescription>Customize your profile background</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="backgroundColor">Background Color</Label>
-                    <div className="flex gap-2 items-center">
-                      <Input
-                        id="backgroundColor"
-                        type="color"
-                        value={profile.background_color}
-                        onChange={(e) => setProfile({ ...profile, background_color: e.target.value })}
-                        className="w-16 h-10 cursor-pointer"
-                      />
-                      <Input
-                        value={profile.background_color}
-                        onChange={(e) => setProfile({ ...profile, background_color: e.target.value })}
-                        placeholder="#1a1a1a"
-                        className="flex-1"
-                      />
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <Palette className="w-6 h-6 text-purple-400" />
+                    <CardTitle className="text-xl text-white">Appearance Settings</CardTitle>
                   </div>
+                  <CardDescription className="text-gray-400">
+                    Customize the look and feel of your profile
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {!profile.is_premium && (
+                    <div className="p-6 bg-yellow-500/20 border border-yellow-500/30 rounded-xl">
+                      <div className="flex items-center gap-2 text-yellow-400 mb-3">
+                        <Star className="w-5 h-5" />
+                        <span className="font-semibold">Premium Feature</span>
+                      </div>
+                      <p className="text-yellow-300 text-sm">
+                        Upgrade to premium to unlock advanced styling options including card effects, typography, and animations.
+                      </p>
+                    </div>
+                  )}
 
-                  <div>
-                    <Label htmlFor="backgroundImage">Background Image</Label>
-                    <FileUpload
-                      type="image"
-                      accept="image/*"
-                      maxSize={10 * 1024 * 1024}
-                      onUpload={handleBannerUpload}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Optional. Will overlay on top of background color. Max 10MB.
-                    </p>
-                    {profile.background_image_url && (
-                      <div className="mt-2">
-                        <img
-                          src={profile.background_image_url || "/placeholder.svg"}
-                          alt="Current background"
-                          className="w-full h-24 object-cover rounded border"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Card Styling */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Card Styling</h3>
+                      
+                      <div>
+                        <Label htmlFor="card_outline_color" className="text-white font-medium">Card Outline Color</Label>
+                        <div className="mt-2 flex items-center gap-3">
+                          <Input
+                            id="card_outline_color"
+                            type="color"
+                            value={profile.card_outline_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_outline_color: e.target.value } : null)}
+                            className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                          />
+                          <Input
+                            value={profile.card_outline_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_outline_color: e.target.value } : null)}
+                            className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="card_glow_color" className="text-white font-medium">Card Glow Color</Label>
+                        <div className="mt-2 flex items-center gap-3">
+                          <Input
+                            id="card_glow_color"
+                            type="color"
+                            value={profile.card_glow_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_glow_color: e.target.value } : null)}
+                            className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                          />
+                          <Input
+                            value={profile.card_glow_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_glow_color: e.target.value } : null)}
+                            className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="card_glow_intensity" className="text-white font-medium">
+                          Glow Intensity: {profile.card_glow_intensity}
+                        </Label>
+                        <Input
+                          id="card_glow_intensity"
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={profile.card_glow_intensity}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, card_glow_intensity: parseFloat(e.target.value) } : null)}
+                          className="w-full mt-2"
                         />
                       </div>
-                    )}
+                    </div>
+
+                    {/* Typography */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Typography</h3>
+                      
+                      <div>
+                        <Label htmlFor="font_family" className="text-white font-medium">Font Family</Label>
+                        <select
+                          id="font_family"
+                          value={profile.font_family}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, font_family: e.target.value } : null)}
+                          className="w-full mt-2 bg-black/30 border border-gray-700/50 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                          <option value="Inter">Inter</option>
+                          <option value="Roboto">Roboto</option>
+                          <option value="Open Sans">Open Sans</option>
+                          <option value="Poppins">Poppins</option>
+                          <option value="Montserrat">Montserrat</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="font_size" className="text-white font-medium">Font Size</Label>
+                        <select
+                          id="font_size"
+                          value={profile.font_size}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, font_size: e.target.value } : null)}
+                          className="w-full mt-2 bg-black/30 border border-gray-700/50 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                          <option value="14px">Small (14px)</option>
+                          <option value="16px">Medium (16px)</option>
+                          <option value="18px">Large (18px)</option>
+                          <option value="20px">Extra Large (20px)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="font_color" className="text-white font-medium">Font Color</Label>
+                        <div className="mt-2 flex items-center gap-3">
+                          <Input
+                            id="font_color"
+                            type="color"
+                            value={profile.font_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, font_color: e.target.value } : null)}
+                            className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                          />
+                          <Input
+                            value={profile.font_color}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, font_color: e.target.value } : null)}
+                            className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Animations */}
+                  {profile.is_premium && (
+                    <div className="space-y-4 pt-6">
+                      <h3 className="text-lg font-semibold text-white">Animations & Effects</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center space-x-3">
+                          <Switch
+                            id="hover_effects"
+                            checked={profile.hover_effects}
+                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, hover_effects: checked } : null)}
+                            className="data-[state=checked]:bg-red-600"
+                          />
+                          <Label htmlFor="hover_effects" className="text-white font-medium">Hover Effects</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <Switch
+                            id="parallax_effects"
+                            checked={profile.parallax_effects}
+                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, parallax_effects: checked } : null)}
+                            className="data-[state=checked]:bg-red-600"
+                          />
+                          <Label htmlFor="parallax_effects" className="text-white font-medium">Parallax Effects</Label>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <Switch
+                            id="particle_effects"
+                            checked={profile.particle_effects}
+                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, particle_effects: checked } : null)}
+                            className="data-[state=checked]:bg-red-600"
+                          />
+                          <Label htmlFor="particle_effects" className="text-white font-medium">Particle Effects</Label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-6">
+                    <Button 
+                      onClick={saveProfile} 
+                      disabled={saving} 
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl text-lg"
+                    >
+                      {saving ? "Saving..." : "Save Appearance"}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
+            </div>
+            )}
 
-              {/* Messages */}
-              {error && <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
-              {success && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{success}</div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-4">
-                <Button type="submit" disabled={saving} className="flex-1">
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/profile/edit">Cancel</Link>
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="links" className="space-y-6">
-            <SocialLinksManager />
-          </TabsContent>
-
-          <TabsContent value="music" className="space-y-6">
-            <MusicManager />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <form onSubmit={handleSave} className="space-y-6">
-              {/* Privacy */}
-              <Card>
+            {/* Links Tab */}
+            {activeTab === "links" && (
+              <div
+                key="links"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
                 <CardHeader>
-                  <CardTitle>Privacy Settings</CardTitle>
-                  <CardDescription>Control who can see your profile</CardDescription>
+                  <div className="flex items-center gap-3">
+                    <LinkIcon className="w-6 h-6 text-green-400" />
+                    <CardTitle className="text-xl text-white">Social Links</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Manage your custom social media and website links
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="isPublic">Public Profile</Label>
-                      <p className="text-sm text-muted-foreground">Allow others to view your bio page</p>
+                  <SocialLinksManager profileId={profile.id} />
+                </CardContent>
+              </Card>
+            </div>
+            )}
+
+            {/* Music Tab */}
+            {activeTab === "music" && (
+              <div
+                key="music"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Music className="w-6 h-6 text-pink-400" />
+                    <CardTitle className="text-xl text-white">Music Settings</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Configure your music player and track settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MusicManager profileId={profile.id} />
+                </CardContent>
+              </Card>
+            </div>
+            )}
+
+            {/* Badges Tab */}
+            {activeTab === "badges" && (
+              <div
+                key="badges"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Crown className="w-6 h-6 text-yellow-400" />
+                    <CardTitle className="text-xl text-white">Badges</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Select and manage your profile badges
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BadgeSelector 
+                    currentBadgeId={profile.featured_badge_id}
+                    onBadgeSelect={(badgeId: string) => {
+                      setProfile(prev => prev ? { ...prev, featured_badge_id: badgeId } : null)
+                    }}
+                    isPremium={profile.is_premium}
+                    isVerified={profile.is_verified}
+                    viewCount={profile.view_count || 0}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            )}
+
+            {/* Spotify Tab */}
+            {activeTab === "spotify" && (
+              <div
+                key="spotify"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Music className="w-6 h-6 text-green-400" />
+                    <CardTitle className="text-xl text-white">Spotify Integration</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Connect your Spotify account and import your favorite tracks
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SpotifyIntegration profileId={profile.id} />
+                </CardContent>
+              </Card>
+            </div>
+            )}
+
+            {/* Reveal Tab */}
+            {activeTab === "reveal" && (
+              <div
+                key="reveal"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Eye className="w-6 h-6 text-indigo-400" />
+                    <CardTitle className="text-xl text-white">Reveal Page</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Create exclusive content for your followers (Coming Next Update!)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Maintenance Screen */}
+                  <div className="text-center py-12">
+                    <div className="w-24 h-24 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <span className="text-4xl">🚀</span>
                     </div>
-                    <Switch
-                      id="isPublic"
-                      checked={profile.is_public}
-                      onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
-                    />
+                    <h3 className="text-2xl font-bold text-white mb-4">Coming Next Update!</h3>
+                    <p className="text-gray-300 text-lg mb-6">
+                      The reveal page feature is being developed and will be available soon.
+                    </p>
+                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                      <p className="text-sm text-gray-400">
+                        This will include custom content, exclusive reveals, and more interactive features for your followers.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Reveal Settings (Disabled for now) */}
+                  <div className="space-y-4 opacity-50">
+                    <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                      <h4 className="text-lg font-semibold text-white mb-3">Reveal Settings</h4>
+                      <p className="text-gray-400 text-sm mb-4">
+                        These settings will be available when the reveal feature launches.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="reveal_title" className="text-gray-400">Reveal Title</Label>
+                          <Input
+                            id="reveal_title"
+                            value={profile.reveal_title || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, reveal_title: e.target.value } : null)}
+                            placeholder="Enter reveal title"
+                            disabled
+                            className="bg-gray-700/50 border-gray-600 text-gray-400"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="reveal_button" className="text-gray-400">Reveal Button Text</Label>
+                          <Input
+                            id="reveal_button"
+                            value={profile.reveal_button || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, reveal_button: e.target.value } : null)}
+                            placeholder="Enter button text"
+                            disabled
+                            className="bg-gray-700/50 border-gray-600 text-gray-400"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <Label htmlFor="reveal_message" className="text-gray-400">Reveal Message</Label>
+                        <Textarea
+                          id="reveal_message"
+                          value={profile.reveal_message || ""}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, reveal_message: e.target.value } : null)}
+                          placeholder="Enter your reveal message"
+                          rows={4}
+                          disabled
+                          className="bg-gray-700/50 border-gray-600 text-gray-400"
+                        />
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="reveal_enabled"
+                            checked={profile.reveal_enabled || false}
+                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, reveal_enabled: checked } : null)}
+                            disabled
+                          />
+                          <Label htmlFor="reveal_enabled" className="text-gray-400">Enable Reveal Page</Label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">This feature is currently under development</p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+            </div>
+            )}
 
-              {/* Messages */}
-              {error && <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
-              {success && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded text-green-700 text-sm">{success}</div>
-              )}
+            {/* Settings Tab */}
+            {activeTab === "settings" && (
+              <div
+                key="settings"
+                className="animate-in slide-in-from-bottom-2 duration-300"
+              >
+                <Card className="bg-black/40 backdrop-blur-xl border border-gray-800/50 shadow-2xl">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-6 h-6 text-gray-400" />
+                    <CardTitle className="text-xl text-white">Account Settings</CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Manage your account preferences, integrations, and security
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {/* Profile Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                      <h3 className="text-lg font-semibold text-white mb-4">Profile Statistics</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total Views:</span>
+                          <span className="text-white font-semibold">{profile.view_count || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total Likes:</span>
+                          <span className="text-white font-semibold">{profile.like_count || 0}</span>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Actions */}
-              <div className="flex gap-4">
-                <Button type="submit" disabled={saving} className="flex-1">
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/profile/edit">Cancel</Link>
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </main>
+                    <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                      <h3 className="text-lg font-semibold text-white mb-4">Account Status</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Verification:</span>
+                          <span className={profile.is_verified ? "text-green-400 font-semibold" : "text-gray-500"}>
+                            {profile.is_verified ? "✓ Verified" : "Not Verified"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Premium:</span>
+                          <span className={profile.is_premium ? "text-yellow-400 font-semibold" : "text-gray-500"}>
+                            {profile.is_premium ? "✓ Premium" : "Free"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Role:</span>
+                          <span className="text-white font-semibold">{profile.role || "User"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Integrations */}
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-white">Platform Integrations</h3>
+                    
+                    {/* Discord Integration */}
+                    <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src="https://cdn3.emoji.gg/emojis/26344-discord.png" 
+                            alt="Discord" 
+                            className="w-6 h-6 object-contain"
+                          />
+                          <div>
+                            <h4 className="text-lg font-semibold text-white">Discord</h4>
+                            <p className="text-gray-400 text-sm">Connect your Discord account for staff access</p>
+                          </div>
+                        </div>
+                        {discordStatus === "connected" ? (
+                          <div className="flex items-center gap-2 text-green-400">
+                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span className="text-sm font-medium">Connected</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-sm">Not Connected</span>
+                        )}
+                      </div>
+                      
+                      {discordStatus === "connected" ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm text-green-400">
+                            <span className="font-medium">Connected as: {profile.discord_username}</span>
+                          </div>
+                          <Button 
+                            onClick={disconnectDiscord} 
+                            variant="outline" 
+                            size="sm"
+                            className="border-gray-700/50 text-gray-300 hover:text-white hover:bg-white/10"
+                          >
+                            Disconnect Discord
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          onClick={connectDiscord} 
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                        >
+                          Connect Discord
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Spotify Integration */}
+                    <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                      <div className="flex items-center justify-between mb-4">
+                                                 <div className="flex items-center gap-3">
+                           <img 
+                             src="https://cdn3.emoji.gg/emojis/35248-spotify.png" 
+                             alt="Spotify" 
+                             className="w-6 h-6 object-contain"
+                           />
+                           <div>
+                             <h4 className="text-lg font-semibold text-white">Spotify</h4>
+                             <p className="text-gray-400 text-sm">Connect your Spotify account to share music</p>
+                           </div>
+                         </div>
+                        {profile.spotify_connected ? (
+                          <div className="flex items-center gap-2 text-green-400">
+                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span className="text-sm font-medium">Connected</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-sm">Not Connected</span>
+                        )}
+                      </div>
+                      
+                      {profile.spotify_connected ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm text-green-400">
+                            <span className="font-medium">Connected as: {profile.spotify_username}</span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="border-gray-700/50 text-gray-300 hover:text-white hover:bg-white/10"
+                          >
+                            Disconnect Spotify
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white font-medium"
+                        >
+                          Connect Spotify
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Social Media Usernames */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                                                 <div>
+                           <div className="flex items-center gap-2 mb-2">
+                             <img 
+                               src="https://cdn3.emoji.gg/emojis/4680-roblox.png" 
+                               alt="Roblox" 
+                               className="w-5 h-5 object-contain"
+                             />
+                             <Label htmlFor="roblox_username" className="text-white font-medium">Roblox Username</Label>
+                           </div>
+                           <Input
+                             id="roblox_username"
+                             value={profile.roblox_username || ""}
+                             onChange={(e) => setProfile(prev => prev ? { ...prev, roblox_username: e.target.value } : null)}
+                             placeholder="Your Roblox username"
+                             className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                           />
+                         </div>
+                        
+                        <div>
+                          <Label htmlFor="github_username" className="text-white font-medium">GitHub Username</Label>
+                          <Input
+                            id="github_username"
+                            value={profile.github_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, github_username: e.target.value } : null)}
+                            placeholder="Your GitHub username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="twitter_username" className="text-white font-medium">Twitter Username</Label>
+                          <Input
+                            id="twitter_username"
+                            value={profile.twitter_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, twitter_username: e.target.value } : null)}
+                            placeholder="Your Twitter username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="instagram_username" className="text-white font-medium">Instagram Username</Label>
+                          <Input
+                            id="instagram_username"
+                            value={profile.instagram_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, instagram_username: e.target.value } : null)}
+                            placeholder="Your Instagram username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="youtube_channel" className="text-white font-medium">YouTube Channel</Label>
+                          <Input
+                            id="youtube_channel"
+                            value={profile.youtube_channel || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, youtube_channel: e.target.value } : null)}
+                            placeholder="Your YouTube channel name"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="twitch_username" className="text-white font-medium">Twitch Username</Label>
+                          <Input
+                            id="twitch_username"
+                            value={profile.twitch_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, twitch_username: e.target.value } : null)}
+                            placeholder="Your Twitch username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="tiktok_username" className="text-white font-medium">TikTok Username</Label>
+                          <Input
+                            id="tiktok_username"
+                            value={profile.tiktok_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, tiktok_username: e.target.value } : null)}
+                            placeholder="Your TikTok username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="reddit_username" className="text-white font-medium">Reddit Username</Label>
+                          <Input
+                            id="reddit_username"
+                            value={profile.reddit_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, reddit_username: e.target.value } : null)}
+                            placeholder="Your Reddit username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="linkedin_username" className="text-white font-medium">LinkedIn Username</Label>
+                          <Input
+                            id="linkedin_username"
+                            value={profile.linkedin_username || ""}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, linkedin_username: e.target.value } : null)}
+                            placeholder="Your LinkedIn username"
+                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      <Button 
+                        onClick={saveProfile} 
+                        disabled={saving} 
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl text-lg"
+                      >
+                        {saving ? "Saving..." : "Save Integrations"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Danger Zone */}
+                  <div className="p-6 bg-red-500/20 border border-red-500/30 rounded-xl">
+                    <h3 className="text-lg font-semibold text-red-400 mb-3">Danger Zone</h3>
+                    <p className="text-red-300 text-sm mb-4">
+                      These actions cannot be undone. Please be careful.
+                    </p>
+                    <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 font-semibold py-3 rounded-xl">
+                      Delete Account
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

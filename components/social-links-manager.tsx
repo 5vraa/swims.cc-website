@@ -23,23 +23,31 @@ interface SocialLink {
 }
 
 const SOCIAL_ICONS = [
-  { value: "twitter", label: "Twitter", icon: <Twitter className="w-4 h-4" /> },
-  { value: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" /> },
+  { value: "twitter", label: "X (Twitter)", icon: "https://cdn3.emoji.gg/emojis/66219-x.png" },
+  { value: "instagram", label: "Instagram", icon: "https://cdn3.emoji.gg/emojis/23860-instagram.png" },
   { value: "facebook", label: "Facebook", icon: <Facebook className="w-4 h-4" /> },
-  { value: "linkedin", label: "LinkedIn", icon: <Linkedin className="w-4 h-4" /> },
-  { value: "youtube", label: "YouTube", icon: <Youtube className="w-4 h-4" /> },
-  { value: "tiktok", label: "TikTok", icon: <Music2 className="w-4 h-4" /> },
-  { value: "github", label: "GitHub", icon: <Github className="w-4 h-4" /> },
-  { value: "discord", label: "Discord", icon: <Globe className="w-4 h-4" /> },
-  { value: "twitch", label: "Twitch", icon: <Twitch className="w-4 h-4" /> },
-  { value: "spotify", label: "Spotify", icon: <Music2 className="w-4 h-4" /> },
+  { value: "linkedin", label: "LinkedIn", icon: "https://cdn3.emoji.gg/emojis/65623-linkedin.png" },
+  { value: "youtube", label: "YouTube", icon: "https://cdn3.emoji.gg/emojis/54079-youtube.png" },
+  { value: "tiktok", label: "TikTok", icon: "https://cdn3.emoji.gg/emojis/15188-tiktok.png" },
+  { value: "github", label: "GitHub", icon: "https://cdn3.emoji.gg/emojis/8346-github.png" },
+  { value: "discord", label: "Discord", icon: "https://cdn3.emoji.gg/emojis/26344-discord.png" },
+  { value: "twitch", label: "Twitch", icon: "https://cdn3.emoji.gg/emojis/4782-twitchlogo.png" },
+  { value: "spotify", label: "Spotify", icon: "https://cdn3.emoji.gg/emojis/35248-spotify.png" },
+  { value: "roblox", label: "Roblox", icon: "https://cdn3.emoji.gg/emojis/4680-roblox.png" },
+  { value: "steam", label: "Steam", icon: "https://cdn3.emoji.gg/emojis/13904-steam.png" },
+  { value: "epicgames", label: "Epic Games", icon: "https://cdn3.emoji.gg/emojis/3716-epicgames.png" },
+  { value: "reddit", label: "Reddit", icon: "https://cdn3.emoji.gg/emojis/30250-reddit-de-01.png" },
   { value: "website", label: "Website", icon: <Globe className="w-4 h-4" /> },
   { value: "email", label: "Email", icon: <Mail className="w-4 h-4" /> },
   { value: "phone", label: "Phone", icon: <Phone className="w-4 h-4" /> },
   { value: "custom", label: "Custom", icon: <ExternalLink className="w-4 h-4" /> },
 ]
 
-export function SocialLinksManager() {
+interface SocialLinksManagerProps {
+  profileId: string
+}
+
+export function SocialLinksManager({ profileId }: SocialLinksManagerProps) {
   const [links, setLinks] = useState<SocialLink[]>([])
   const [loading, setLoading] = useState(true)
   const [editingLink, setEditingLink] = useState<SocialLink | null>(null)
@@ -242,14 +250,44 @@ export function SocialLinksManager() {
                 <Label htmlFor="platform">Platform</Label>
                 <Select value={formData.platform} onValueChange={(value) => setFormData({ ...formData, platform: value })}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue>
+                      {(() => {
+                        const iconData = SOCIAL_ICONS.find((icon) => icon.value === formData.platform)
+                        if (!iconData) return formData.platform
+                        
+                        return (
+                          <div className="flex items-center gap-2">
+                            {typeof iconData.icon === 'string' ? (
+                              <img 
+                                src={iconData.icon} 
+                                alt={iconData.label} 
+                                className="w-4 h-4 object-contain"
+                              />
+                            ) : (
+                              iconData.icon
+                            )}
+                            <span>{iconData.label}</span>
+                          </div>
+                        )
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     {SOCIAL_ICONS.map((icon) => (
-                      <SelectItem key={icon.value} value={icon.value}>
-                        <div className="flex items-center gap-2">
-                          <span>{icon.icon}</span>
-                          <span>{icon.label}</span>
+                      <SelectItem key={icon.value} value={icon.value} className="py-2">
+                        <div className="flex items-center gap-3">
+                          {typeof icon.icon === 'string' ? (
+                            <img 
+                              src={icon.icon} 
+                              alt={icon.label} 
+                              className="w-5 h-5 object-contain"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 flex items-center justify-center">
+                              {icon.icon}
+                            </div>
+                          )}
+                          <span className="font-medium">{icon.label}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -306,7 +344,21 @@ export function SocialLinksManager() {
                           </div>
 
                           <div className="text-lg text-red-500">
-                            {SOCIAL_ICONS.find((icon) => icon.value === link.platform)?.icon || <ExternalLink className="w-4 h-4" />}
+                            {(() => {
+                              const iconData = SOCIAL_ICONS.find((icon) => icon.value === link.platform)
+                              if (!iconData) return <ExternalLink className="w-4 h-4" />
+                              
+                              if (typeof iconData.icon === 'string') {
+                                return (
+                                  <img 
+                                    src={iconData.icon} 
+                                    alt={iconData.label} 
+                                    className="w-5 h-5 object-contain"
+                                  />
+                                )
+                              }
+                              return iconData.icon
+                            })()}
                           </div>
 
                           <div className="flex-1 min-w-0">

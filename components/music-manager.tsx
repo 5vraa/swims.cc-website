@@ -41,7 +41,11 @@ const PLAYER_STYLES = [
   { value: "neon", label: "Neon", description: "Glowing cyberpunk style" },
 ]
 
-export function MusicManager() {
+interface MusicManagerProps {
+  profileId: string
+}
+
+export function MusicManager({ profileId }: MusicManagerProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([])
   const [settings, setSettings] = useState<PlayerSettings>({
     player_style: "modern",
@@ -60,7 +64,7 @@ export function MusicManager() {
     artist: "",
     audio_url: "",
     cover_image_url: "",
-    is_active: true,
+    is_visible: true,
   })
 
   useEffect(() => {
@@ -74,6 +78,8 @@ export function MusicManager() {
       if (response.ok) {
         const data = await response.json()
         setTracks(data.sort((a: MusicTrack, b: MusicTrack) => a.sort_order - b.sort_order))
+      } else {
+        console.error("Failed to fetch tracks:", response.status)
       }
     } catch (error) {
       console.error("Error fetching music tracks:", error)
@@ -88,6 +94,8 @@ export function MusicManager() {
         if (data) {
           setSettings(data)
         }
+      } else {
+        console.error("Failed to fetch settings:", response.status)
       }
     } catch (error) {
       console.error("Error fetching player settings:", error)
@@ -99,6 +107,12 @@ export function MusicManager() {
   const handleSubmitTrack = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Check if we already have a track and this is a new track (not editing)
+    if (!editingTrack && tracks.length >= 1) {
+      alert("You can only have 1 music track per profile. Please delete the existing track first.")
+      return
+    }
+
     try {
       const url = editingTrack ? `/api/music/tracks/${editingTrack.id}` : "/api/music/tracks"
       const method = editingTrack ? "PUT" : "POST"
@@ -109,7 +123,7 @@ export function MusicManager() {
         body: JSON.stringify({
           ...formData,
           sort_order: editingTrack ? editingTrack.sort_order : tracks.length,
-          is_visible: formData.is_active,
+          is_visible: formData.is_visible,
         }),
       })
 
@@ -203,7 +217,7 @@ export function MusicManager() {
       artist: "",
       audio_url: "",
       cover_image_url: "",
-      is_active: true,
+      is_visible: true,
     })
     setEditingTrack(null)
   }
@@ -215,7 +229,7 @@ export function MusicManager() {
       artist: track.artist || "",
       audio_url: track.audio_url,
       cover_image_url: track.cover_image_url || "",
-      is_active: track.is_visible,
+      is_visible: track.is_visible,
     })
     setIsDialogOpen(true)
   }

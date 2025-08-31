@@ -3,6 +3,83 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Profile Page Specific Styles - Fixed Height & No Scrolling */
+.profile-page-fixed {
+  height: 100vh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+.profile-page-fixed * {
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+}
+
+/* Custom Profile Styling */
+.profile-card-custom {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.profile-card-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.profile-reveal-button {
+  background: linear-gradient(135deg, #9333ea, #2563eb);
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 12px 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(147, 51, 234, 0.4);
+  transition: all 0.3s ease;
+  transform: scale(1);
+}
+
+.profile-reveal-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(147, 51, 234, 0.6);
+}
+
+/* Prevent any scrolling on profile pages */
+body.profile-page-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* Custom scrollbar for reveal content only */
+.reveal-content-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239, 68, 68, 0.5) transparent;
+}
+
+.reveal-content-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reveal-content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.reveal-content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(239, 68, 68, 0.5);
+  border-radius: 3px;
+}
+
+.reveal-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(239, 68, 68, 0.7);
+}
+
 :root {
   --primary-color: #dc2626;
   --primary-hover: #b91c1c;
@@ -128,13 +205,6 @@
   }
 }
 
-/* Added subtle grid pattern for hero background */
-.hero-grid {
-  background: radial-gradient(circle at 1px 1px, rgba(220, 38, 38, 0.1) 1px, transparent 0),
-    linear-gradient(135deg, rgba(16, 16, 16, 0.9) 0%, rgba(26, 26, 26, 0.9) 100%);
-  background-size: 40px 40px, 100% 100%;
-}
-
 /* Added glassmorphism and modern styling effects */
 .glassmorphism {
   background: rgba(26, 26, 26, 0.8);
@@ -143,16 +213,72 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+/* Enhanced navbar glassmorphism */
 .navbar-glass {
-  background: rgba(16, 16, 16, 0.9);
+  background: rgba(16, 16, 16, 0.95);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(42, 42, 42, 0.3);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(220, 38, 38, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(42, 42, 42, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 60px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
 .navbar-glass:hover {
-  border-color: rgba(220, 38, 38, 0.3);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(220, 38, 38, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 60px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Dashboard card styling - consistent with landing page design */
+.dashboard-card {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Force ALL page backgrounds to use ONLY black colors - no gradients */
+.bg-gradient-to-r,
+.bg-gradient-to-br,
+.bg-gradient-to-t,
+.bg-gradient-to-l,
+.bg-gradient-to-bl,
+.bg-gradient-to-tr {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Override any colored backgrounds to use black only */
+.bg-red-500,
+.bg-green-500,
+.bg-blue-500,
+.bg-purple-500,
+.bg-yellow-500,
+.bg-pink-500,
+.bg-indigo-500,
+.bg-orange-500 {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Ensure all sections and containers use black backgrounds */
+section,
+.container,
+.page-container,
+main > div {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Override any gradient backgrounds in cards or containers */
+.card,
+.Card,
+[class*="bg-gradient"] {
+  background: rgba(0, 0, 0, 0.8) !important;
 }
 
 .glow-text {
@@ -220,27 +346,63 @@ body {
   position: relative;
 }
 
-/* Make the background image cover the entire screen */
-.background-image {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -10; /* Behind everything */
-  object-fit: cover; /* Ensures image covers entire area */
-}
-
 /* Ensure content appears above the background */
 main {
   position: relative;
-  z-index: 1;
+  z-index: 10;
+  padding-top: 100px; /* Space for fixed navbar */
 }
 
-/* Make navbar appear above background */
+/* Make navbar appear above background with proper glassmorphism */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
 nav, .navbar-glass {
   position: relative;
+  z-index: 100;
+}
+
+/* Hero section background containment */
+#hero {
+  position: relative;
+  z-index: 1;
+  margin-top: -100px; /* Pull up to start from top */
+  padding-top: 100px; /* Push content down below navbar */
+  overflow: hidden; /* Ensure background image doesn't extend beyond */
+}
+
+#hero .container {
+  position: relative;
   z-index: 20;
+}
+
+/* Ensure hero background image is contained */
+#hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/sitebackground.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: local;
+  z-index: -1;
+}
+
+/* Ensure hero section containers are transparent */
+#hero .container,
+#hero .container > div,
+.hero-container {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* Add to your globals.css */

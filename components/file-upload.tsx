@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, ImageIcon, Music } from "lucide-react"
 
 interface FileUploadProps {
+  currentUrl?: string | null
   onUpload: (url: string) => void
   accept?: string
   maxSize?: number

@@ -7,6 +7,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { profile_id, event_type, event_data } = body
 
+    if (!profile_id || profile_id === "undefined") {
+      return NextResponse.json({ error: "Missing or invalid profile_id" }, { status: 400 })
+    }
+
+    if (!event_type) {
+      return NextResponse.json({ error: "Missing event_type" }, { status: 400 })
+    }
+
     // Get visitor info
     const ip_address = request.ip || request.headers.get("x-forwarded-for") || "unknown"
     const user_agent = request.headers.get("user-agent") || "unknown"
@@ -14,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabase.from("analytics_events").insert({
       profile_id,
       event_type,
-      event_data,
+      event_data: event_data || {},
       ip_address,
       user_agent,
     })

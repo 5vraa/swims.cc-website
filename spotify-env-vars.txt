@@ -1,0 +1,29 @@
+# Spotify Integration Environment Variables for Vercel
+
+# Add these to your .env file or Vercel environment variables:
+
+# Spotify OAuth
+SPOTIFY_CLIENT_ID=your_spotify_client_id_here
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret_here
+
+# Site URL (for OAuth redirect)
+NEXT_PUBLIC_SITE_URL=https://swims.cc
+
+# Existing Supabase variables (keep these)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Discord variables (keep these)
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_BOT_TOKEN=your_discord_bot_token
+DISCORD_GUILD_ID=your_discord_server_id
+DISCORD_STAFF_ROLE_ID=1404371407961460757
+
+# How to get Spotify credentials:
+# 1. Go to https://developer.spotify.com/dashboard
+# 2. Create a new app
+# 3. Get Client ID and Client Secret
+# 4. Add redirect URI: https://your-domain.vercel.app/api/spotify/callback
+# 5. Add these to Vercel environment variables
