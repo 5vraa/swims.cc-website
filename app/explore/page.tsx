@@ -65,10 +65,10 @@ export default function ExplorePage() {
         query = query.eq("is_premium", true)
       }
 
-      // Apply sorting
+            // Apply sorting
       if (sortBy === "views") {
         query = query.order("view_count", { ascending: false })
- else if (sortBy === "newest") {
+      } else if (sortBy === "newest") {
         query = query.order("created_at", { ascending: false })
       }
 
