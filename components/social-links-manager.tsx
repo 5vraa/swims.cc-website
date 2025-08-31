@@ -192,6 +192,7 @@ export function SocialLinksManager({ profileId }: SocialLinksManagerProps) {
     setIsDialogOpen(true)
   }
 
+  // Show skeleton while loading instead of full loading screen
   if (loading) {
     return (
       <Card>
@@ -199,8 +200,10 @@ export function SocialLinksManager({ profileId }: SocialLinksManagerProps) {
           <CardTitle>Social Links</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-gray-600 rounded w-24"></div>
+            <div className="h-8 bg-gray-600 rounded w-full"></div>
+            <div className="h-32 bg-gray-600 rounded w-full"></div>
           </div>
         </CardContent>
       </Card>

@@ -98,7 +98,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
   const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([])
   const [userBadges, setUserBadges] = useState<UserBadge[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Changed to false - no initial loading
   const [error, setError] = useState<string | null>(null)
   const [musicPlayerOpen, setMusicPlayerOpen] = useState(false)
   const supabase = createClient()
@@ -149,7 +149,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
   const loadProfile = async () => {
     try {
-      setLoading(true)
+      // Don't show loading state - just load in background
       
       // First load the profile to get the user ID
       const { data: profileData, error: profileError } = await supabase
@@ -197,77 +197,118 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         // Social links - use profile_id
         supabase
           .from("social_links")
-          .select("id, platform, url, display_name, icon, order_index, is_visible")
+          .select("*")
           .eq("profile_id", profileWithDefaults.id)
-          .eq("is_visible", true)
-          .order("order_index")
-          .limit(10),
+          .eq("is_active", true)
+          .order("order_index", { ascending: true }),
         
         // Music tracks - use profile_id
         supabase
           .from("music_tracks")
-          .select("id, title, artist, audio_url, cover_image_url, duration, order_index, is_visible")
+          .select("*")
           .eq("profile_id", profileWithDefaults.id)
           .eq("is_visible", true)
-          .order("order_index")
-          .limit(5),
+          .order("order_index", { ascending: true }),
         
         // User badges - use profile_id
         supabase
           .from("user_badges")
-          .select("id, assigned_at, badge:badges(id, name, display_name, description, color, icon, is_active)")
+          .select(`
+            id,
+            badge:badges(
+              id,
+              name,
+              display_name,
+              description,
+              icon,
+              color
+            )
+          `)
           .eq("profile_id", profileWithDefaults.id)
-          .eq("badge.is_active", true)
-          .limit(10)
       ])
 
       // Handle social links
-      if (socialResult.status === 'fulfilled' && socialResult.value.data) {
-        console.log('Social links loaded:', socialResult.value.data)
+      if (socialResult.status === "fulfilled" && socialResult.value.data) {
         setSocialLinks(socialResult.value.data)
-      } else if (socialResult.status === 'rejected') {
+      } else if (socialResult.status === "rejected") {
         console.error('Social links loading failed:', socialResult.reason)
-      } else {
-        console.log('Social links result:', socialResult)
       }
 
       // Handle music tracks
-      if (musicResult.status === 'fulfilled' && musicResult.value.data) {
-        console.log('Music tracks loaded:', musicResult.value.data)
+      if (musicResult.status === "fulfilled" && musicResult.value.data) {
         setMusicTracks(musicResult.value.data)
-      } else if (musicResult.status === 'rejected') {
+      } else if (musicResult.status === "rejected") {
         console.error('Music tracks loading failed:', musicResult.reason)
-      } else {
-        console.log('Music tracks result:', musicResult)
       }
 
       // Handle badges
-      if (badgesResult.status === 'fulfilled' && badgesResult.value.data) {
-        console.log('Badges loaded:', badgesResult.value.data)
+      if (badgesResult.status === "fulfilled" && badgesResult.value.data) {
         setUserBadges(badgesResult.value.data)
-      } else if (badgesResult.status === 'rejected') {
+      } else if (badgesResult.status === "rejected") {
         console.error('Badge loading failed:', badgesResult.reason)
       }
 
     } catch (err) {
       console.error("Error loading profile:", err)
       setError("Failed to load profile")
-    } finally {
-      setLoading(false)
     }
   }
 
-  if (loading) {
+  // Show skeleton while loading instead of full loading screen
+  if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-500/20 via-purple-500/20 to-blue-500/20">
-        <div className="absolute inset-0 bg-black/60"></div>
-        <div className="relative z-10 h-full flex items-center justify-center px-4 py-8">
-          <div className="max-w-2xl w-full text-center">
-            <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8">
-              {/* Fast Loading Spinner */}
-              <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full spinner-fast mx-auto mb-6"></div>
-              <h2 className="text-xl font-semibold text-white mb-2">Loading Profile</h2>
-              <p className="text-gray-300 text-sm">Checking your connection!</p>
+      <div className="profile-page-fixed h-screen bg-background text-foreground overflow-hidden">
+        {/* Background Skeleton */}
+        <div className="fixed inset-0 w-full h-full pointer-events-none -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"></div>
+          <div className="absolute inset-0 bg-black/60"></div>
+        </div>
+
+        {/* Profile Content Skeleton */}
+        <div className="relative z-10 h-full flex items-center justify-center px-2 sm:px-4 py-4 sm:py-8">
+          <div className="w-full max-w-sm sm:max-w-lg lg:max-w-2xl max-h-full">
+            <div className="bg-card/80 backdrop-blur-sm border border-border shadow-xl rounded-2xl p-4 sm:p-6 animate-pulse">
+              <div className="text-center">
+                {/* Avatar Skeleton */}
+                <div className="mb-3 sm:mb-4">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-600 mx-auto"></div>
+                </div>
+                
+                {/* Name Skeleton */}
+                <div className="mb-2">
+                  <div className="h-6 sm:h-8 bg-gray-600 rounded w-32 mx-auto"></div>
+                </div>
+                
+                {/* Username Skeleton */}
+                <div className="mb-2 sm:mb-3">
+                  <div className="h-4 bg-gray-600 rounded w-24 mx-auto"></div>
+                </div>
+                
+                {/* Bio Skeleton */}
+                <div className="mb-3 sm:mb-4">
+                  <div className="h-4 bg-gray-600 rounded w-48 mx-auto mb-2"></div>
+                  <div className="h-4 bg-gray-600 rounded w-40 mx-auto"></div>
+                </div>
+                
+                {/* Social Links Skeleton */}
+                <div className="mb-3 sm:mb-4">
+                  <div className="flex justify-center gap-2 sm:gap-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-600 rounded-lg"></div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Badges Skeleton */}
+                <div className="mt-3 sm:mt-4">
+                  <div className="h-4 bg-gray-600 rounded w-16 mx-auto mb-2 sm:mb-3"></div>
+                  <div className="flex justify-center gap-2 sm:gap-3">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-600 rounded-full"></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

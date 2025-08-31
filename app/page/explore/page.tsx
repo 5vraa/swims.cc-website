@@ -84,15 +84,40 @@ export default function ExplorePage() {
     (profile.bio && profile.bio.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  // Show skeleton while loading instead of full loading screen
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground p-4">
         <div className="max-w-7xl mx-auto">
-          {/* Fast Loading Header */}
+          {/* Header Skeleton */}
           <div className="text-center py-12">
-            <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <h1 className="text-3xl font-bold mb-2">Loading Profiles</h1>
-            <p className="text-muted-foreground">Checking your connection!</p>
+            <div className="h-10 bg-gray-600 rounded w-64 mx-auto mb-4 animate-pulse"></div>
+            <div className="h-6 bg-gray-600 rounded w-96 mx-auto mb-8 animate-pulse"></div>
+            <div className="flex justify-center gap-8 mb-8">
+              <div className="h-4 bg-gray-600 rounded w-24 animate-pulse"></div>
+              <div className="h-4 bg-gray-600 rounded w-32 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Search Skeleton */}
+          <div className="mb-8 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="h-10 bg-gray-600 rounded flex-1 animate-pulse"></div>
+              <div className="h-10 bg-gray-600 rounded w-48 animate-pulse"></div>
+              <div className="h-10 bg-gray-600 rounded w-48 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Profiles Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="bg-card border border-border rounded-lg p-4 animate-pulse">
+                <div className="w-16 h-16 bg-gray-600 rounded-full mx-auto mb-3"></div>
+                <div className="h-4 bg-gray-600 rounded w-24 mx-auto mb-2"></div>
+                <div className="h-3 bg-gray-600 rounded w-32 mx-auto mb-2"></div>
+                <div className="h-3 bg-gray-600 rounded w-20 mx-auto"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

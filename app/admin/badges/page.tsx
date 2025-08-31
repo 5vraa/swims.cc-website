@@ -184,7 +184,20 @@ export default function AdminBadgesPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-400">Loading...</div>
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-600 rounded w-24"></div>
+                        <div className="h-3 bg-gray-600 rounded w-32"></div>
+                      </div>
+                      <div className="w-16 h-6 bg-gray-600 rounded"></div>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-600 rounded"></div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="space-y-3">
                 {filteredUserBadges.map((userBadge) => (

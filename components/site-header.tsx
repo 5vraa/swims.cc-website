@@ -36,18 +36,16 @@ export function SiteHeader() {
   const [user, setUser] = useState<any>(null)
   const [username, setUsername] = useState<string | null>(null)
   const [showStaff, setShowStaff] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [logoutLoading, setLogoutLoading] = useState(false)
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session - no loading state needed
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUser(session.user)
         await loadUserProfile(session.user)
       }
-      setLoading(false)
     }
 
     // Listen for auth changes
@@ -71,7 +69,7 @@ export function SiteHeader() {
 
   const loadUserProfile = async (user: any) => {
     try {
-      // Your database uses user_id column to link profiles to auth users
+      // Load profile in background - no blocking
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('username, role')

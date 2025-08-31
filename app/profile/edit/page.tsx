@@ -71,7 +71,7 @@ interface Profile {
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // No initial loading
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -92,8 +92,6 @@ export default function EditProfilePage() {
 
   const loadProfile = async () => {
     try {
-      setLoading(true)
-      
       // Load profile data first (most important)
       const {
         data: { user },
@@ -153,11 +151,9 @@ export default function EditProfilePage() {
           }
         } else {
           setProfile(inserted as any)
-          setLoading(false) // Show dashboard immediately after profile loads
         }
       } else {
         setProfile(profileData as any)
-        setLoading(false) // Show dashboard immediately after profile loads
       }
       
       // Load Discord status in background (non-blocking)
@@ -168,7 +164,6 @@ export default function EditProfilePage() {
     } catch (error) {
       console.error("Error loading profile:", error)
       setError("Failed to load profile")
-      setLoading(false)
     }
   }
 
@@ -331,12 +326,32 @@ export default function EditProfilePage() {
     }
   }
 
-  if (loading) {
+  // Show skeleton while loading instead of full loading screen
+  if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-300 text-lg font-medium">Loading your dashboard...</p>
+      <div className="min-h-screen px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Dashboard Header Skeleton */}
+          <div className="mb-8">
+            <div className="h-10 bg-gray-700 rounded w-48 mb-2 animate-pulse"></div>
+            <div className="h-6 bg-gray-700 rounded w-80 animate-pulse"></div>
+          </div>
+
+          <div className="flex gap-8">
+            {/* Left Sidebar Skeleton */}
+            <div className="w-72 space-y-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="h-12 bg-gray-700 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
+
+            {/* Right Content Skeleton */}
+            <div className="flex-1 space-y-6">
+              <div className="h-32 bg-gray-700 rounded-xl animate-pulse"></div>
+              <div className="h-48 bg-gray-700 rounded-xl animate-pulse"></div>
+              <div className="h-64 bg-gray-700 rounded-xl animate-pulse"></div>
+            </div>
+          </div>
         </div>
       </div>
     )

@@ -227,15 +227,21 @@ export function MusicManager({ profileId }: MusicManagerProps) {
     setIsDialogOpen(true)
   }
 
+  // Show skeleton while loading instead of full loading screen
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Music Player</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            Music Player
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-gray-600 rounded w-32"></div>
+            <div className="h-8 bg-gray-600 rounded w-full"></div>
+            <div className="h-32 bg-gray-600 rounded w-full"></div>
           </div>
         </CardContent>
       </Card>

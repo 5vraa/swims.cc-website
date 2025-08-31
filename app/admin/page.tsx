@@ -344,15 +344,34 @@ export default function AdminDashboard() {
     }
   }
 
+  // Show skeleton while loading instead of full loading screen
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="min-h-screen px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-1/4 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="h-96 bg-gray-700 rounded"></div>
-              <div className="h-96 bg-gray-700 rounded"></div>
+          {/* Dashboard Header Skeleton */}
+          <div className="mb-8">
+            <div className="h-10 bg-gray-700 rounded w-64 mb-2 animate-pulse"></div>
+            <div className="h-6 bg-gray-700 rounded w-96 animate-pulse"></div>
+          </div>
+
+          <div className="flex gap-8">
+            {/* Left Sidebar Skeleton */}
+            <div className="w-72 space-y-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-12 bg-gray-700 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
+
+            {/* Right Content Skeleton */}
+            <div className="flex-1 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-24 bg-gray-700 rounded-xl animate-pulse"></div>
+                ))}
+              </div>
+              <div className="h-48 bg-gray-700 rounded-xl animate-pulse"></div>
+              <div className="h-64 bg-gray-700 rounded-xl animate-pulse"></div>
             </div>
           </div>
         </div>
