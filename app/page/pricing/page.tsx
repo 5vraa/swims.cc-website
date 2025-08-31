@@ -33,8 +33,8 @@ export default function PricingPage() {
     },
     {
       name: "Premium",
-      price: "$9.99",
-      period: "per month",
+      price: "€5",
+      period: "lifetime",
       description: "Unlock exclusive themes and advanced features",
       features: [
         "Everything in Free",
@@ -51,13 +51,13 @@ export default function PricingPage() {
       popular: false,
       icon: Crown,
       color: "from-yellow-500 to-orange-500",
-      buttonText: "Start Premium",
+      buttonText: "Get Premium",
       buttonVariant: "outline" as const
     },
     {
       name: "Pro",
-      price: "$19.99",
-      period: "per month",
+      price: "€10",
+      period: "lifetime",
       description: "Maximum customization and exclusive features",
       features: [
         "Everything in Premium",
@@ -74,7 +74,7 @@ export default function PricingPage() {
       popular: false,
       icon: Zap,
       color: "from-purple-500 to-pink-500",
-      buttonText: "Go Pro",
+      buttonText: "Get Pro",
       buttonVariant: "outline" as const
     }
   ]
@@ -145,9 +145,9 @@ export default function PricingPage() {
             
             {/* Quick Actions */}
             <div className="flex flex-wrap justify-center gap-4">
-              <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
-                <Link href="/auth/signup">Start Free Now</Link>
-              </Button>
+                             <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+                 <Link href="/auth/signup">Start Free Now</Link>
+               </Button>
               <Button asChild variant="outline" className="border-white text-white hover:bg-white/10">
                 <Link href="/page/explore">View Examples</Link>
               </Button>
@@ -171,14 +171,14 @@ export default function PricingPage() {
                 <Card 
                   key={index} 
                   className={`relative bg-black/20 backdrop-blur-md border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 ${
-                    plan.popular ? 'ring-2 ring-green-500/50 scale-105' : ''
+                                         plan.popular ? 'ring-2 ring-red-500/50 scale-105' : ''
                   }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                        Most Popular
-                      </span>
+                                             <span className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                         Most Popular
+                       </span>
                     </div>
                   )}
                   
@@ -200,7 +200,7 @@ export default function PricingPage() {
                     <ul className="space-y-3">
                       {plan.features.map((feature, featureIndex) => (
                         <li key={featureIndex} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                          <Check className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
                           <span className="text-gray-300">{feature}</span>
                         </li>
                       ))}
@@ -208,7 +208,7 @@ export default function PricingPage() {
                     
                     <Button 
                       asChild 
-                      className={`w-full ${plan.buttonVariant === 'default' ? 'bg-green-600 hover:bg-green-700' : 'border-gray-600 text-white hover:bg-white/10'}`}
+                      className={`w-full ${plan.buttonVariant === 'default' ? 'bg-red-600 hover:bg-red-700' : 'border-gray-600 text-white hover:bg-white/10'}`}
                       variant={plan.buttonVariant}
                     >
                       <Link href={plan.name === "Free" ? "/auth/signup" : "/auth/signup"}>
@@ -231,9 +231,9 @@ export default function PricingPage() {
                 return (
                   <Card key={index} className="bg-black/20 backdrop-blur-md border-gray-700/50 text-center">
                     <CardContent className="p-6">
-                      <div className="w-12 h-12 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
-                        <Icon className="w-6 h-6 text-green-400" />
-                      </div>
+                                             <div className="w-12 h-12 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+                         <Icon className="w-6 h-6 text-red-400" />
+                       </div>
                       <h3 className="text-white font-semibold mb-2">{benefit.title}</h3>
                       <p className="text-gray-300 text-sm">{benefit.description}</p>
                     </CardContent>
@@ -253,48 +253,48 @@ export default function PricingPage() {
                     <thead>
                       <tr className="border-b border-white/10">
                         <th className="text-left text-white font-semibold py-4">Feature</th>
-                        <th className="text-center text-green-400 font-semibold py-4">Free</th>
-                        <th className="text-center text-yellow-400 font-semibold py-4">Premium</th>
-                        <th className="text-center text-purple-400 font-semibold py-4">Pro</th>
+                        <th className="text-center text-red-400 font-semibold py-4">Free</th>
+                        <th className="text-center text-red-400 font-semibold py-4">Premium</th>
+                        <th className="text-center text-red-400 font-semibold py-4">Pro</th>
                       </tr>
                     </thead>
                     <tbody className="space-y-4">
 
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Advanced Animations</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Custom Fonts & Colors</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Premium Themes</td>
                         <td className="text-center text-red-400">❌</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Custom Domain</td>
                         <td className="text-center text-red-400">❌</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Advanced Analytics</td>
                         <td className="text-center text-red-400">❌</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                       <tr className="border-b border-white/5">
                         <td className="text-white py-4">Priority Support</td>
                         <td className="text-center text-red-400">❌</td>
-                        <td className="text-center text-green-400">✅</td>
-                        <td className="text-center text-green-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
+                        <td className="text-center text-red-400">✅</td>
                       </tr>
                     </tbody>
                   </table>
@@ -322,7 +322,7 @@ export default function PricingPage() {
 
           {/* CTA Section */}
           <div className="text-center">
-            <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-md border-green-500/30 max-w-3xl mx-auto">
+                         <Card className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-md border-red-500/30 max-w-3xl mx-auto">
               <CardHeader>
                 <CardTitle className="text-white text-3xl mb-4">Ready to Get Started?</CardTitle>
                 <CardDescription className="text-gray-300 text-lg">
@@ -331,12 +331,12 @@ export default function PricingPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-wrap justify-center gap-4">
-                  <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
-                    <Link href="/auth/signup">
-                      Start Free Now
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Link>
-                  </Button>
+                                     <Button asChild size="lg" className="bg-red-600 hover:bg-red-700 text-white">
+                     <Link href="/auth/signup">
+                       Start Free Now
+                       <ArrowRight className="w-5 h-5 ml-2" />
+                     </Link>
+                   </Button>
                   <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
                     <Link href="/page/explore">View Examples</Link>
                   </Button>

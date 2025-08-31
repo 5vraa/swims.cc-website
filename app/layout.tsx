@@ -149,17 +149,17 @@ export default async function RootLayout({
                 <h4 className="text-white font-semibold mb-4">Resources</h4>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <a href="/help" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/help" className="text-gray-400 hover:text-red-400 transition-colors">
                       Help Center
                     </a>
                   </li>
                   <li>
-                    <a href="/changelog" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/changelog" className="text-gray-400 hover:text-red-400 transition-colors">
                       Changelog
                     </a>
                   </li>
                   <li>
-                    <a href="/redeem" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/redeem" className="text-gray-400 hover:text-red-400 transition-colors">
                       Redeem Code
                     </a>
                   </li>
@@ -191,17 +191,17 @@ export default async function RootLayout({
                 <h4 className="text-white font-semibold mb-4">Legal</h4>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <a href="/terms" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/terms" className="text-gray-400 hover:text-red-400 transition-colors">
                       Terms of Service
                     </a>
                   </li>
                   <li>
-                    <a href="/copyright" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/copyright" className="text-gray-400 hover:text-red-400 transition-colors">
                       Copyright Policy
                     </a>
                   </li>
                   <li>
-                    <a href="/privacy" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <a href="/page/privacy" className="text-gray-400 hover:text-red-400 transition-colors">
                       Privacy Policy
                     </a>
                   </li>

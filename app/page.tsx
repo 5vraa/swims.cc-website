@@ -367,66 +367,98 @@ export default function HomePage() {
             <p className="text-muted-foreground text-lg">Choose the plan that works for you</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="card-glass">
-              <CardHeader className="p-8">
-                <CardTitle className="text-2xl text-primary mb-2">Free</CardTitle>
-                <div className="text-3xl font-bold mb-4">
-                  $0<span className="text-lg text-muted-foreground">/month</span>
-                </div>
-                <CardDescription className="text-card-foreground mb-6">
-                  Perfect for getting started with your bio page
-                </CardDescription>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Custom bio page
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> 1GB file storage
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Basic themes
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Mobile optimized
-                  </li>
-                </ul>
-                <Button className="w-full mt-6 bg-primary hover:bg-primary/90">Get Started</Button>
-              </CardHeader>
-            </Card>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <Card className="card-glass">
+               <CardHeader className="p-8">
+                 <CardTitle className="text-2xl text-primary mb-2">Free</CardTitle>
+                 <div className="text-3xl font-bold mb-4">
+                   $0<span className="text-lg text-muted-foreground">/month</span>
+                 </div>
+                 <CardDescription className="text-card-foreground mb-6">
+                   Perfect for getting started with your bio page
+                 </CardDescription>
+                 <ul className="space-y-3 text-sm">
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Custom bio page
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> 1GB file storage
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Basic themes
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Mobile optimized
+                   </li>
+                 </ul>
+                 <Button className="w-full mt-6 bg-primary hover:bg-primary/90">Get Started</Button>
+               </CardHeader>
+             </Card>
 
-            <Card className="card-glass border-primary/50">
-              <CardHeader className="p-8">
-                <CardTitle className="text-2xl text-primary mb-2">Pro</CardTitle>
-                <div className="text-3xl font-bold mb-4">
-                  $9<span className="text-lg text-muted-foreground">/month</span>
-                </div>
-                <CardDescription className="text-card-foreground mb-6">
-                  Everything you need for a professional presence
-                </CardDescription>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Everything in Free
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Custom domain
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> 100GB storage
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Advanced analytics
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span> Premium themes
-                  </li>
-                </ul>
-                <Button className="w-full mt-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
-                  Upgrade to Pro
-                </Button>
-              </CardHeader>
-            </Card>
-          </div>
+             <Card className="card-glass border-primary/50">
+               <CardHeader className="p-8">
+                 <CardTitle className="text-2xl text-primary mb-2">Premium</CardTitle>
+                 <div className="text-3xl font-bold mb-4">
+                   €5<span className="text-lg text-muted-foreground"> lifetime</span>
+                 </div>
+                 <CardDescription className="text-card-foreground mb-6">
+                   Everything you need for a professional presence
+                 </CardDescription>
+                 <ul className="space-y-3 text-sm">
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Everything in Free
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Custom domain
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> 100GB storage
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Advanced analytics
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Premium themes
+                   </li>
+                 </ul>
+                 <Button className="w-full mt-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
+                   Get Premium
+                 </Button>
+               </CardHeader>
+             </Card>
+
+             <Card className="card-glass border-primary/50">
+               <CardHeader className="p-8">
+                 <CardTitle className="text-2xl text-primary mb-2">Pro</CardTitle>
+                 <div className="text-3xl font-bold mb-4">
+                   €10<span className="text-lg text-muted-foreground"> lifetime</span>
+                 </div>
+                 <CardDescription className="text-card-foreground mb-6">
+                   Maximum customization and exclusive features
+                 </CardDescription>
+                 <ul className="space-y-3 text-sm">
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Everything in Premium
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Multiple custom domains
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Unlimited storage
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Advanced analytics & insights
+                   </li>
+                   <li className="flex items-center">
+                     <span className="text-red-500 mr-2">✓</span> Priority support
+                   </li>
+                 </ul>
+                 <Button className="w-full mt-6 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
+                   Get Pro
+                 </Button>
+               </CardHeader>
+             </Card>
+           </div>
         </div>
       </section>
 
