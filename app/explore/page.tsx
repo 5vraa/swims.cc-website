@@ -18,7 +18,7 @@ interface Profile {
   background_color: string
   background_image_url: string | null
   view_count: number
-  like_count: number
+
   is_verified: boolean
   is_premium: boolean
   created_at: string
@@ -28,7 +28,7 @@ export default function ExplorePage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<"views" | "likes" | "newest">("views")
+  const [sortBy, setSortBy] = useState<"views" | "newest">("views")
   const [filter, setFilter] = useState<"all" | "verified" | "premium">("all")
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function ExplorePage() {
           background_color,
           background_image_url,
           view_count,
-          like_count,
+  
           is_verified,
           is_premium,
           created_at
@@ -68,9 +68,7 @@ export default function ExplorePage() {
       // Apply sorting
       if (sortBy === "views") {
         query = query.order("view_count", { ascending: false })
-      } else if (sortBy === "likes") {
-        query = query.order("like_count", { ascending: false })
-      } else if (sortBy === "newest") {
+ else if (sortBy === "newest") {
         query = query.order("created_at", { ascending: false })
       }
 
@@ -160,7 +158,7 @@ export default function ExplorePage() {
               </div>
               <div className="bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-700/50">
                 <div className="text-3xl font-bold text-white mb-2">
-                  {formatNumber(profiles.reduce((sum, p) => sum + (p.like_count || 0), 0))}
+                  0
                 </div>
                 <div className="text-gray-400">Total Likes</div>
               </div>
@@ -203,7 +201,7 @@ export default function ExplorePage() {
                 className="bg-black/20 border border-gray-700/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="views">Most Views</option>
-                <option value="likes">Most Likes</option>
+
                 <option value="newest">Newest</option>
               </select>
             </div>
@@ -287,7 +285,7 @@ export default function ExplorePage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <TrendingUp className="w-4 h-4" />
-                      {formatNumber(profile.like_count || 0)} likes
+                      No likes
                     </div>
                     <div className="text-xs">
                       {getTimeAgo(profile.created_at)}

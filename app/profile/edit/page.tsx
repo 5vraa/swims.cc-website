@@ -44,7 +44,6 @@ interface Profile {
   tiktok_username: string | null
   role: string | null
   view_count: number
-  like_count: number
   featured_badge_id: string | null
   card_outline_color: string
   card_glow_color: string
@@ -887,10 +886,6 @@ export default function EditProfilePage() {
                         <div className="flex justify-between">
                           <span className="text-gray-400">Total Views:</span>
                           <span className="text-white font-semibold">{profile.view_count || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total Likes:</span>
-                          <span className="text-white font-semibold">{profile.like_count || 0}</span>
                         </div>
                       </div>
                     </div>

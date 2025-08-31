@@ -38,7 +38,7 @@ interface Profile {
   is_verified: boolean
   role: string | null
   view_count: number
-  like_count: number
+
   created_at: string
   card_outline_color: string
   card_glow_color: string
@@ -214,17 +214,8 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     if (!profile) return
     
     try {
-      const newLikeCount = liked ? profile.like_count - 1 : profile.like_count + 1
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({ like_count: newLikeCount })
-        .eq("id", profile.id)
-
-      if (!error) {
-        setProfile(prev => prev ? { ...prev, like_count: newLikeCount } : null)
-        setLiked(!liked)
-      }
+      // Like functionality removed
+      setLiked(!liked)
     } catch (err) {
       console.error("Error updating like count:", err)
     }
@@ -372,7 +363,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                     }}
                   >
                     <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-                    {profile.like_count || 0}
+                    Like
                   </Button>
 
                   {/* Removed reveal button */}
@@ -386,7 +377,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                   </span>
                   <span className="flex items-center gap-1">
                     <Heart className="w-3 h-3" />
-                    {profile?.like_count || 0} likes
+                    No likes
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
