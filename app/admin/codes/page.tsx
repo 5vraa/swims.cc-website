@@ -52,7 +52,7 @@ export default function AdminCodes() {
       if (error) throw error
       setCodes(data || [])
     } catch (error) {
-      console.error("[v0] Error fetching codes:", error)
+      console.error("[swims.cc] Error fetching codes:", error)
     } finally {
       setIsLoading(false)
     }
@@ -110,7 +110,7 @@ export default function AdminCodes() {
       setShowForm(false)
       fetchCodes()
     } catch (error) {
-      console.error("[v0] Error creating code:", error)
+      console.error("[swims.cc] Error creating code:", error)
     }
   }
 
@@ -122,7 +122,7 @@ export default function AdminCodes() {
       if (error) throw error
       fetchCodes()
     } catch (error) {
-      console.error("[v0] Error updating code status:", error)
+      console.error("[swims.cc] Error updating code status:", error)
     }
   }
 
@@ -136,7 +136,7 @@ export default function AdminCodes() {
       if (error) throw error
       fetchCodes()
     } catch (error) {
-      console.error("[v0] Error deleting code:", error)
+      console.error("[swims.cc] Error deleting code:", error)
     }
   }
 

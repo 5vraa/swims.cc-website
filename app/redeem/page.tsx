@@ -51,7 +51,7 @@ export default function RedeemPage() {
         })
       }
     } catch (error) {
-      console.error("[v0] Error redeeming code:", error)
+      console.error("[swims.cc] Error redeeming code:", error)
       setResult({
         success: false,
         message: "An error occurred while redeeming the code",

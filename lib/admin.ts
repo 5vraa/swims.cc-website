@@ -13,7 +13,7 @@ export async function isAdmin(): Promise<boolean> {
 
     return profile?.role === "admin" || profile?.role === "moderator"
   } catch (error) {
-    console.error("[v0] Error checking admin status:", error)
+    console.error("[swims.cc] Error checking admin status:", error)
     return false
   }
 }
@@ -40,6 +40,6 @@ export async function logAdminAction(
       details: details || {},
     })
   } catch (error) {
-    console.error("[v0] Error logging admin action:", error)
+    console.error("[swims.cc] Error logging admin action:", error)
   }
 }

@@ -7,7 +7,7 @@ export async function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("[v0] Supabase environment variables not configured on server")
+    console.warn("[swims.cc] Supabase environment variables not configured on server")
 
     // Return a mock client that prevents crashes
     return {

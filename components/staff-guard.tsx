@@ -53,7 +53,7 @@ export function StaffGuard({ children, fallback }: StaffGuardProps) {
         setTimeout(() => router.push("/"), 2000)
       }
     } catch (error) {
-      console.error("[v0] Error checking staff status:", error)
+      console.error("[swims.cc] Error checking staff status:", error)
       setIsStaff(false)
       setIsLoading(false)
     }

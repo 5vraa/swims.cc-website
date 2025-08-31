@@ -57,7 +57,7 @@ export default function HomePage() {
 
     // Simulate form submission for local server
     setTimeout(() => {
-      console.log("[v0] Form submitted:", formData)
+      console.log("[swims.cc] Form submitted:", formData)
       setSubmitMessage("Thank you for your message! We'll get back to you soon.")
       setFormData({ name: "", email: "", message: "" })
       setIsSubmitting(false)

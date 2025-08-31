@@ -45,7 +45,7 @@ export function AdminGuard({ children, fallback }: AdminGuardProps) {
         setTimeout(() => router.push("/"), 2000)
       }
     } catch (error) {
-      console.error("[v0] Error checking admin status:", error)
+      console.error("[swims.cc] Error checking admin status:", error)
       setIsAdmin(false)
       setIsLoading(false)
     }

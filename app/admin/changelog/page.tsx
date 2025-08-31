@@ -54,7 +54,7 @@ export default function AdminChangelog() {
       if (error) throw error
       setEntries(data || [])
     } catch (error) {
-      console.error("[v0] Error fetching changelog entries:", error)
+      console.error("[swims.cc] Error fetching changelog entries:", error)
     } finally {
       setIsLoading(false)
     }
@@ -109,7 +109,7 @@ export default function AdminChangelog() {
       if (error) throw error
       fetchEntries()
     } catch (error) {
-      console.error("[v0] Error deleting changelog entry:", error)
+      console.error("[swims.cc] Error deleting changelog entry:", error)
     }
   }
 
@@ -121,7 +121,7 @@ export default function AdminChangelog() {
       if (error) throw error
       fetchEntries()
     } catch (error) {
-      console.error("[v0] Error updating publish status:", error)
+      console.error("[swims.cc] Error updating publish status:", error)
     }
   }
 

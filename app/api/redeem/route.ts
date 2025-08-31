@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (redemptionError) {
-      console.error("[v0] Error creating redemption:", redemptionError)
+      console.error("[swims.cc] Error creating redemption:", redemptionError)
       return NextResponse.json({ error: "Failed to redeem code" }, { status: 500 })
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       .eq("id", redeemCode.id)
 
     if (updateError) {
-      console.error("[v0] Error updating code usage:", updateError)
+      console.error("[swims.cc] Error updating code usage:", updateError)
       // Note: In a production app, you'd want to handle this more carefully
       // possibly with database transactions or rollback mechanisms
     }
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Error in redeem API:", error)
+    console.error("[swims.cc] Error in redeem API:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
