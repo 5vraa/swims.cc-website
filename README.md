@@ -93,7 +93,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ### Public Pages
 - `/` - Landing page with hero section
-- `/explore` - Discover user profiles
+- `/page/explore` - Discover user profiles
 - `/help` - Help center and documentation
 - `/pricing` - Subscription plans
 - `/auth/signup` - User registration

@@ -71,11 +71,17 @@ export function SiteHeader() {
 
   const loadUserProfile = async (user: any) => {
     try {
-      const { data: profile } = await supabase
+      // Your database uses user_id column to link profiles to auth users
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role, username')
+        .select('username, role')
         .eq('user_id', user.id)
         .single()
+
+      if (error) {
+        console.error('Could not find profile for user:', user.id, error)
+        return
+      }
 
       if (profile) {
         setUsername(profile.username)
@@ -155,7 +161,7 @@ export function SiteHeader() {
                 <>
                   <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
                   {username && (
-                    <Link href={`/${username}`} className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">Preview Profile</Link>
+                    <Link href={`/${username}`} className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Preview Profile</Link>
                   )}
                   {showStaff && (
                     <Link href="/admin" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Admin</Link>

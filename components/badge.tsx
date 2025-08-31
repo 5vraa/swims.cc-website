@@ -1,5 +1,5 @@
 import type { Badge as BadgeType } from "@/types/badge"
-import { Crown, Code, Star, CheckCircle, Heart, Video, Flag as Flask, Shield } from "lucide-react"
+import { Crown, Code, Star, CheckCircle, Heart, Video, Flag as Flask, Shield, Palette, Bug, Users, Zap, Lightbulb } from "lucide-react"
 
 interface BadgeProps {
   badge: BadgeType
@@ -18,6 +18,21 @@ const iconMap = {
   video: Video,
   flask: Flask,
   shield: Shield,
+  // Add more icon mappings
+  admin: Crown,
+  moderator: Shield,
+  verified: CheckCircle,
+  premium: Star,
+  vip: Crown,
+  owner: Crown,
+  staff: Shield,
+  developer: Code,
+  designer: Palette,
+  bug_hunter: Bug,
+  community_leader: Users,
+  content_creator: Video,
+  early_adopter: Zap,
+  feature_suggester: Lightbulb,
 }
 
 export function Badge({ badge, size = "md", variant = "filled", showTooltip = true, animated = false }: BadgeProps) {

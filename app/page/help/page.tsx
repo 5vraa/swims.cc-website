@@ -169,7 +169,7 @@ export default function HelpPage() {
                 <Link href="/auth/signup">Get Started</Link>
               </Button>
               <Button asChild variant="outline" className="border-white text-white hover:bg-white/10">
-                <Link href="/explore">View Examples</Link>
+                <Link href="/page/explore">View Examples</Link>
               </Button>
             </div>
           </div>

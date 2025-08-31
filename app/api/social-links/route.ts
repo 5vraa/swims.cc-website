@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get user from auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -11,12 +11,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get user's profile ID first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError)
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
     // Get social links for the user's profile
     const { data: socialLinks, error } = await supabase
       .from('social_links')
       .select('*')
-      .eq('profile_id', user.id)
-      .order('sort_order')
+      .eq('profile_id', profile.id)
+      .order('order_index')
 
     if (error) {
       console.error('Error fetching social links:', error)
@@ -32,12 +44,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get user from auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's profile ID first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError)
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -47,13 +71,13 @@ export async function POST(request: NextRequest) {
     const { data: socialLink, error } = await supabase
       .from('social_links')
       .insert({
-        profile_id: user.id,
+        profile_id: profile.id,
         platform,
         url,
         display_name,
         icon,
         is_visible: is_visible ?? true,
-        sort_order: 0
+        order_index: 0
       })
       .select()
       .single()
@@ -72,12 +96,24 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get user from auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's profile ID first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError)
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     const body = await request.json()
@@ -94,7 +130,7 @@ export async function PUT(request: NextRequest) {
         is_visible
       })
       .eq('id', id)
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
       .select()
       .single()
 
@@ -112,12 +148,24 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get user from auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user's profile ID first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError)
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -132,7 +180,7 @@ export async function DELETE(request: NextRequest) {
       .from('social_links')
       .delete()
       .eq('id', id)
-      .eq('profile_id', user.id)
+      .eq('profile_id', profile.id)
 
     if (error) {
       console.error('Error deleting social link:', error)

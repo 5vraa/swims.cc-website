@@ -15,9 +15,127 @@
   bottom: 0 !important;
 }
 
+/* Profile Page Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Badge hover effects */
+.badge-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  filter: brightness(1.2);
+}
+
+/* Tooltip animations */
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+}
+
+.tooltip-animate {
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Apply animations to profile elements */
+.profile-card-custom {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.profile-card-custom .avatar {
+  animation: slideInLeft 0.6s ease-out 0.2s both;
+}
+
+.profile-card-custom .profile-info {
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.profile-card-custom .badges {
+  animation: slideInRight 0.6s ease-out 0.6s both;
+}
+
+.profile-card-custom .stats {
+  animation: fadeInUp 0.6s ease-out 0.8s both;
+}
+
+/* Smooth scrolling and enhanced animations */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Glow effects */
+.glow-on-hover {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-on-hover:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
 .profile-page-fixed * {
   max-height: 100vh !important;
   max-height: 100dvh !important;
+}
+
+/* Allow background images to be full size */
+.profile-page-fixed .fixed.inset-0 {
+  max-height: none !important;
 }
 
 /* Custom Profile Styling */

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get user from auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's Spotify tokens
+    // Get user's Spotify access token
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('spotify_access_token, spotify_refresh_token, spotify_token_expires_at')
@@ -22,62 +22,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Spotify not connected' }, { status: 400 })
     }
 
-    // Check if token is expired and refresh if needed
-    let accessToken = profile.spotify_access_token
+    // Check if token is expired
     if (profile.spotify_token_expires_at && new Date(profile.spotify_token_expires_at) <= new Date()) {
-      // Token expired, refresh it
-      const refreshResponse = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(
-            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-          ).toString('base64')}`
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: profile.spotify_refresh_token
-        })
-      })
-
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json()
-        accessToken = refreshData.access_token
-
-        // Update the token in database
-        await supabase
-          .from('profiles')
-          .update({
-            spotify_access_token: accessToken,
-            spotify_token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString()
-          })
-          .eq('id', user.id)
-      }
+      return NextResponse.json({ error: 'Spotify token expired' }, { status: 400 })
     }
 
-    // Fetch user's playlists from Spotify
-    const playlistsResponse = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+    // Fetch playlists from Spotify
+    const response = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${profile.spotify_access_token}`
       }
     })
 
-    if (!playlistsResponse.ok) {
+    if (!response.ok) {
       return NextResponse.json({ error: 'Failed to fetch Spotify playlists' }, { status: 400 })
     }
 
-    const playlistsData = await playlistsResponse.json()
-    const playlists = playlistsData.items.map((playlist: any) => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      images: playlist.images,
-      tracks_count: playlist.tracks.total,
-      owner: playlist.owner.display_name,
-      public: playlist.public
-    }))
-
-    return NextResponse.json(playlists)
+    const data = await response.json()
+    return NextResponse.json(data.items || [])
 
   } catch (error) {
     console.error('Error fetching Spotify playlists:', error)

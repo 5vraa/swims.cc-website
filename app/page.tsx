@@ -201,7 +201,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 bg-transparent backdrop-blur-sm"
-              onClick={() => (window.location.href = "/explore")}
+              onClick={() => (window.location.href = "/page/explore")}
             >
               View All Profiles
             </Button>

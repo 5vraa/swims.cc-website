@@ -27,6 +27,9 @@ export default function AuthCallbackPage() {
       // Check if this is a Discord OAuth callback
       const provider = searchParams.get('provider')
       const error = searchParams.get('error')
+      const code = searchParams.get('code')
+      
+      console.log("Auth callback - Provider:", provider, "Code:", code, "Error:", error)
       
       if (error) {
         throw new Error(`Authentication failed: ${error}`)
@@ -34,17 +37,26 @@ export default function AuthCallbackPage() {
 
       if (provider === 'discord') {
         setMessage("Processing Discord authentication...")
+        console.log("Processing Discord OAuth callback...")
       }
 
-      // Wait a bit for OAuth session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // For OAuth flows, we need to wait for the session to be established
+      if (code) {
+        setMessage("Completing OAuth flow...")
+        console.log("OAuth code detected, waiting for session...")
+        
+        // Wait longer for OAuth session to be established
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
 
       // Try to get session multiple times for OAuth flows
       let session = null
       let attempts = 0
-      const maxAttempts = 5
+      const maxAttempts = 10
 
       while (!session && attempts < maxAttempts) {
+        console.log(`Session attempt ${attempts + 1}/${maxAttempts}`)
+        
         const { data: { session: currentSession }, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -53,28 +65,30 @@ export default function AuthCallbackPage() {
         
         if (currentSession) {
           session = currentSession
+          console.log("Session found:", currentSession.user.id)
           break
         }
         
         attempts++
         if (attempts < maxAttempts) {
-          console.log(`Session attempt ${attempts}/${maxAttempts}, waiting...`)
+          console.log(`No session yet, waiting 1 second...`)
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
 
       if (!session) {
-        throw new Error("Failed to get session after multiple attempts")
+        console.error("Failed to get session after", maxAttempts, "attempts")
+        throw new Error("Failed to get session after multiple attempts. Please try logging in again.")
       }
 
       const user = session.user
-      console.log("Auth callback - User:", user)
+      console.log("Auth callback - User:", user.id, user.email)
 
       // Check if user already has a profile
       const { data: existingProfile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .maybeSingle()
 
       if (profileError && profileError.code !== "PGRST116") {
@@ -83,6 +97,7 @@ export default function AuthCallbackPage() {
       }
 
       if (existingProfile) {
+        console.log("Updating existing profile...")
         // Update existing profile with Discord info if available
         const updates: any = {}
         
@@ -90,22 +105,26 @@ export default function AuthCallbackPage() {
           updates.discord_id = user.user_metadata.discord_id
           updates.discord_username = user.user_metadata.discord_username
           updates.discord_authorized = true
+          console.log("Adding Discord info to profile:", updates)
         }
 
         if (Object.keys(updates).length > 0) {
           const { error: updateError } = await supabase
             .from("profiles")
             .update(updates)
-            .eq("id", user.id)
+            .eq("user_id", user.id)
 
           if (updateError) {
             console.error("Update error:", updateError)
+          } else {
+            console.log("Profile updated successfully")
           }
         }
 
         // Check Discord role if Discord auth
         if (user.user_metadata?.discord_id) {
           try {
+            console.log("Checking Discord role for:", user.user_metadata.discord_id)
             const roleCheckResponse = await fetch('/api/discord/check-role', {
               method: 'POST',
               headers: {
@@ -123,7 +142,7 @@ export default function AuthCallbackPage() {
                 const { error: roleUpdateError } = await supabase
                   .from("profiles")
                   .update({ role: "admin" })
-                  .eq("id", user.id)
+                  .eq("user_id", user.id)
 
                 if (roleUpdateError) {
                   console.error("Role update error:", roleUpdateError)
@@ -145,6 +164,7 @@ export default function AuthCallbackPage() {
           router.push("/profile/edit")
         }, 2000)
       } else {
+        console.log("Creating new profile...")
         // Create new profile
         const baseUsername = String(
           user.user_metadata?.username || user.email?.split("@")[0] || "user"
@@ -153,7 +173,7 @@ export default function AuthCallbackPage() {
           .replace(/[^a-z0-9-]/g, "")
 
         const profileData: any = {
-          id: user.id,
+          user_id: user.id,
           username: baseUsername,
           display_name: user.user_metadata?.display_name || baseUsername,
           email: user.email,
@@ -176,6 +196,7 @@ export default function AuthCallbackPage() {
           profileData.discord_id = user.user_metadata.discord_id
           profileData.discord_username = user.user_metadata.discord_username
           profileData.discord_authorized = true
+          console.log("Adding Discord info to new profile:", profileData)
         }
 
         const { error: insertError } = await supabase
@@ -204,9 +225,12 @@ export default function AuthCallbackPage() {
           }
         }
 
+        console.log("Profile created successfully")
+
         // Check Discord role for new users
         if (user.user_metadata?.discord_id) {
           try {
+            console.log("Checking Discord role for new user:", user.user_metadata.discord_id)
             const roleCheckResponse = await fetch('/api/discord/check-role', {
               method: 'POST',
               headers: {
@@ -224,7 +248,7 @@ export default function AuthCallbackPage() {
                 const { error: roleUpdateError } = await supabase
                   .from("profiles")
                   .update({ role: "admin" })
-                  .eq("id", user.id)
+                  .eq("user_id", user.id)
 
                 if (roleUpdateError) {
                   console.error("Role update error:", roleUpdateError)
@@ -261,6 +285,7 @@ export default function AuthCallbackPage() {
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
             <h2 className="text-xl font-semibold mb-2">Processing Authentication</h2>
             <p className="text-muted-foreground">{message}</p>
+            <p className="text-xs text-muted-foreground mt-2">This may take a few seconds...</p>
           </CardContent>
         </Card>
       </div>

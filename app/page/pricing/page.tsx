@@ -149,7 +149,7 @@ export default function PricingPage() {
                 <Link href="/auth/signup">Start Free Now</Link>
               </Button>
               <Button asChild variant="outline" className="border-white text-white hover:bg-white/10">
-                <Link href="/explore">View Examples</Link>
+                <Link href="/page/explore">View Examples</Link>
               </Button>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function PricingPage() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                    <Link href="/explore">View Examples</Link>
+                    <Link href="/page/explore">View Examples</Link>
                   </Button>
                 </div>
                 <p className="text-sm text-gray-400">

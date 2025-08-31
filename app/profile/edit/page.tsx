@@ -56,6 +56,17 @@ interface Profile {
   reveal_button: string
 
   email: string | null
+  
+  // New appearance properties
+  background_opacity?: number
+  card_border_radius?: number
+  card_background?: string
+  font_weight?: string
+  letter_spacing?: number
+  text_shadows?: boolean
+  gradient_text?: boolean
+  smooth_transitions?: boolean
+  custom_css?: string
 }
 
 export default function EditProfilePage() {
@@ -81,6 +92,9 @@ export default function EditProfilePage() {
 
   const loadProfile = async () => {
     try {
+      setLoading(true)
+      
+      // Load profile data first (most important)
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -139,14 +153,21 @@ export default function EditProfilePage() {
           }
         } else {
           setProfile(inserted as any)
+          setLoading(false) // Show dashboard immediately after profile loads
         }
       } else {
         setProfile(profileData as any)
+        setLoading(false) // Show dashboard immediately after profile loads
       }
+      
+      // Load Discord status in background (non-blocking)
+      if (profileData?.discord_id) {
+        setTimeout(() => checkDiscordStatus(), 100)
+      }
+      
     } catch (error) {
       console.error("Error loading profile:", error)
       setError("Failed to load profile")
-    } finally {
       setLoading(false)
     }
   }
@@ -463,64 +484,6 @@ export default function EditProfilePage() {
                   </CardContent>
                 </Card>
 
-                {/* Avatar & Background Section */}
-                <Card className="dashboard-card">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <Palette className="w-6 h-6 text-purple-400" />
-                      <CardTitle className="text-xl text-white">Profile Media</CardTitle>
-                      <CardDescription className="text-gray-400">
-                        Customize your profile appearance
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label className="text-white font-medium">Profile Picture</Label>
-                      <div className="mt-2">
-                        <FileUpload
-                          currentUrl={profile.avatar_url}
-                          onUpload={handleAvatarUpload}
-                          accept="image/*"
-                          type="image"
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-white font-medium">Background Image</Label>
-                      <div className="mt-2">
-                        <FileUpload
-                          currentUrl={profile.background_image_url}
-                          onUpload={handleBannerUpload}
-                          accept="image/*"
-                          type="image"
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="background_color" className="text-white font-medium">Background Color</Label>
-                      <div className="mt-2 flex items-center gap-3">
-                        <Input
-                          id="background_color"
-                          type="color"
-                          value={profile.background_color}
-                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
-                          className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
-                        />
-                        <Input
-                          value={profile.background_color}
-                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
-                          className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* Your Badges Section */}
                 <Card className="dashboard-card">
                   <CardHeader className="pb-4">
@@ -574,21 +537,107 @@ export default function EditProfilePage() {
                     <CardTitle className="text-xl text-white">Appearance Settings</CardTitle>
                   </div>
                   <CardDescription className="text-gray-400">
-                    Customize the look and feel of your profile
+                    Customize the look and feel of your profile with advanced styling options
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {!profile.is_premium && (
-                    <div className="p-6 bg-yellow-500/20 border border-yellow-500/30 rounded-xl">
-                      <div className="flex items-center gap-2 text-yellow-400 mb-3">
-                        <Star className="w-5 h-5" />
-                        <span className="font-semibold">Premium Feature</span>
+                  {/* Background Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-white">Background Settings</h3>
+                    
+                    <div>
+                      <Label className="text-white font-medium">Background Image (Auto-resized to 1920x1080)</Label>
+                      <div className="mt-2">
+                        <FileUpload
+                          currentUrl={profile.background_image_url}
+                          onUpload={handleBannerUpload}
+                          accept="image/*"
+                          type="image"
+                          className="w-full"
+                        />
                       </div>
-                      <p className="text-yellow-300 text-sm">
-                        Upgrade to premium to unlock advanced styling options including card effects, typography, and animations.
+                      <p className="text-xs text-gray-400 mt-1">
+                        Your image will be automatically resized to 1920x1080 for optimal quality
                       </p>
                     </div>
-                  )}
+
+                    <div>
+                      <Label htmlFor="background_color" className="text-white font-medium">Background Color</Label>
+                      <div className="mt-2 flex items-center gap-3">
+                        <Input
+                          id="background_color"
+                          type="color"
+                          value={profile.background_color}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
+                          className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                        />
+                        <Input
+                          value={profile.background_color}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
+                          className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background_blur" className="text-white font-medium">
+                        Background Blur: {profile.background_blur}px
+                      </Label>
+                      <Input
+                        id="background_blur"
+                        type="range"
+                        min="0"
+                        max="20"
+                        step="1"
+                        value={profile.background_blur}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, background_blur: parseInt(e.target.value) } : null)}
+                        className="w-full mt-2"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Add blur effect to your background image
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background_opacity" className="text-white font-medium">
+                        Background Opacity: {profile.background_opacity || 100}%
+                      </Label>
+                      <Input
+                        id="background_opacity"
+                        type="range"
+                        min="20"
+                        max="100"
+                        step="5"
+                        value={profile.background_opacity || 100}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, background_opacity: parseInt(e.target.value) } : null)}
+                        className="w-full mt-2"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Control how visible your background image is
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Profile Media */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-white">Profile Media</h3>
+                    
+                    <div>
+                      <Label className="text-white font-medium">Profile Picture</Label>
+                      <div className="mt-2">
+                        <FileUpload
+                          currentUrl={profile.avatar_url}
+                          onUpload={handleAvatarUpload}
+                          accept="image/*"
+                          type="image"
+                          className="w-full"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Upload your profile picture (recommended: 400x400px)
+                      </p>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Card Styling */}
@@ -646,6 +695,40 @@ export default function EditProfilePage() {
                           className="w-full mt-2"
                         />
                       </div>
+
+                      <div>
+                        <Label htmlFor="card_border_radius" className="text-white font-medium">
+                          Card Border Radius: {profile.card_border_radius || 12}px
+                        </Label>
+                        <Input
+                          id="card_border_radius"
+                          type="range"
+                          min="0"
+                          max="30"
+                          step="2"
+                          value={profile.card_border_radius || 12}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, card_border_radius: parseInt(e.target.value) } : null)}
+                          className="w-full mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="card_background" className="text-white font-medium">Card Background</Label>
+                        <div className="mt-2 flex items-center gap-3">
+                          <Input
+                            id="card_background"
+                            type="color"
+                            value={profile.card_background || "#000000"}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_background: e.target.value } : null)}
+                            className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                          />
+                          <Input
+                            value={profile.card_background || "#000000"}
+                            onChange={(e) => setProfile(prev => prev ? { ...prev, card_background: e.target.value } : null)}
+                            className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Typography */}
@@ -665,6 +748,11 @@ export default function EditProfilePage() {
                           <option value="Open Sans">Open Sans</option>
                           <option value="Poppins">Poppins</option>
                           <option value="Montserrat">Montserrat</option>
+                          <option value="Lato">Lato</option>
+                          <option value="Source Sans Pro">Source Sans Pro</option>
+                          <option value="Nunito">Nunito</option>
+                          <option value="Ubuntu">Ubuntu</option>
+                          <option value="Playfair Display">Playfair Display</option>
                         </select>
                       </div>
 
@@ -676,10 +764,13 @@ export default function EditProfilePage() {
                           onChange={(e) => setProfile(prev => prev ? { ...prev, font_size: e.target.value } : null)}
                           className="w-full mt-2 bg-black/30 border border-gray-700/50 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                         >
+                          <option value="12px">Extra Small (12px)</option>
                           <option value="14px">Small (14px)</option>
                           <option value="16px">Medium (16px)</option>
                           <option value="18px">Large (18px)</option>
                           <option value="20px">Extra Large (20px)</option>
+                          <option value="24px">Heading (24px)</option>
+                          <option value="32px">Large Heading (32px)</option>
                         </select>
                       </div>
 
@@ -700,47 +791,124 @@ export default function EditProfilePage() {
                           />
                         </div>
                       </div>
+
+                      <div>
+                        <Label htmlFor="font_weight" className="text-white font-medium">Font Weight</Label>
+                        <select
+                          id="font_weight"
+                          value={profile.font_weight || "400"}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, font_weight: e.target.value } : null)}
+                          className="w-full mt-2 bg-black/30 border border-gray-700/50 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                          <option value="300">Light (300)</option>
+                          <option value="400">Regular (400)</option>
+                          <option value="500">Medium (500)</option>
+                          <option value="600">Semi Bold (600)</option>
+                          <option value="700">Bold (700)</option>
+                          <option value="800">Extra Bold (800)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="letter_spacing" className="text-white font-medium">
+                          Letter Spacing: {profile.letter_spacing || 0}px
+                        </Label>
+                        <Input
+                          id="letter_spacing"
+                          type="range"
+                          min="-2"
+                          max="5"
+                          step="0.1"
+                          value={profile.letter_spacing || 0}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, letter_spacing: parseFloat(e.target.value) } : null)}
+                          className="w-full mt-2"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Animations */}
-                  {profile.is_premium && (
-                    <div className="space-y-4 pt-6">
-                      <h3 className="text-lg font-semibold text-white">Animations & Effects</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex items-center space-x-3">
-                          <Switch
-                            id="hover_effects"
-                            checked={profile.hover_effects}
-                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, hover_effects: checked } : null)}
-                            className="data-[state=checked]:bg-red-600"
-                          />
-                          <Label htmlFor="hover_effects" className="text-white font-medium">Hover Effects</Label>
-                        </div>
+                  {/* Advanced Effects */}
+                  <div className="space-y-4 pt-6">
+                    <h3 className="text-lg font-semibold text-white">Advanced Effects & Animations</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="hover_effects"
+                          checked={profile.hover_effects}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, hover_effects: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="hover_effects" className="text-white font-medium">Hover Effects</Label>
+                      </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Switch
-                            id="parallax_effects"
-                            checked={profile.parallax_effects}
-                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, parallax_effects: checked } : null)}
-                            className="data-[state=checked]:bg-red-600"
-                          />
-                          <Label htmlFor="parallax_effects" className="text-white font-medium">Parallax Effects</Label>
-                        </div>
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="parallax_effects"
+                          checked={profile.parallax_effects}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, parallax_effects: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="parallax_effects" className="text-white font-medium">Parallax Effects</Label>
+                      </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Switch
-                            id="particle_effects"
-                            checked={profile.particle_effects}
-                            onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, particle_effects: checked } : null)}
-                            className="data-[state=checked]:bg-red-600"
-                          />
-                          <Label htmlFor="particle_effects" className="text-white font-medium">Particle Effects</Label>
-                        </div>
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="particle_effects"
+                          checked={profile.particle_effects}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, particle_effects: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="particle_effects" className="text-white font-medium">Particle Effects</Label>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="text_shadows"
+                          checked={profile.text_shadows || false}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, text_shadows: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="text_shadows" className="text-white font-medium">Text Shadows</Label>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="gradient_text"
+                          checked={profile.gradient_text || false}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, gradient_text: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="gradient_text" className="text-white font-medium">Gradient Text</Label>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="smooth_transitions"
+                          checked={profile.smooth_transitions !== false}
+                          onCheckedChange={(checked) => setProfile(prev => prev ? { ...prev, smooth_transitions: checked } : null)}
+                          className="data-[state=checked]:bg-red-600"
+                        />
+                        <Label htmlFor="smooth_transitions" className="text-white font-medium">Smooth Transitions</Label>
                       </div>
                     </div>
-                  )}
+
+                    {/* Custom CSS */}
+                    <div>
+                      <Label htmlFor="custom_css" className="text-white font-medium">Custom CSS (Advanced)</Label>
+                      <textarea
+                        id="custom_css"
+                        value={profile.custom_css || ""}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, custom_css: e.target.value } : null)}
+                        placeholder="Add custom CSS rules here..."
+                        rows={4}
+                        className="w-full mt-2 bg-black/30 border border-gray-700/50 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-mono"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Add custom CSS for advanced styling (use with caution)
+                      </p>
+                    </div>
+                  </div>
 
                   <div className="pt-6">
                     <Button 

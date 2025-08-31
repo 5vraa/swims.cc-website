@@ -11,8 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Edit, Trash2, GripVertical, Music, Settings, Palette } from "lucide-react"
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
+import { Plus, Edit, Trash2, Music, Settings, Palette } from "lucide-react"
 import { FileUpload } from "@/components/file-upload"
 
 interface MusicTrack {
@@ -22,7 +21,7 @@ interface MusicTrack {
   audio_url: string
   cover_image_url?: string
   duration?: number
-  sort_order: number
+  order_index: number
   is_visible: boolean
 }
 
@@ -32,13 +31,19 @@ interface PlayerSettings {
   show_controls: boolean
   primary_color: string
   secondary_color: string
+  show_cover_art: boolean
+  show_track_info: boolean
+  show_progress_bar: boolean
+  show_volume_control: boolean
+  loop_playlist: boolean
+  background_color: string
+  accent_color: string
+  text_color: string
 }
 
 const PLAYER_STYLES = [
-  { value: "modern", label: "Modern", description: "Clean glassmorphism design" },
-  { value: "minimal", label: "Minimal", description: "Simple and clean" },
-  { value: "classic", label: "Classic", description: "Traditional music player look" },
-  { value: "neon", label: "Neon", description: "Glowing cyberpunk style" },
+  { value: "sleek", label: "Sleek", description: "Modern horizontal player with progress bar" },
+  { value: "tab", label: "Tab", description: "Compact floating player in top-right corner" },
 ]
 
 interface MusicManagerProps {
@@ -48,11 +53,19 @@ interface MusicManagerProps {
 export function MusicManager({ profileId }: MusicManagerProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([])
   const [settings, setSettings] = useState<PlayerSettings>({
-    player_style: "modern",
+    player_style: "sleek",
     auto_play: false,
     show_controls: true,
     primary_color: "#ef4444",
     secondary_color: "#1f2937",
+    show_cover_art: true,
+    show_track_info: true,
+    show_progress_bar: true,
+    show_volume_control: true,
+    loop_playlist: false,
+    background_color: "#1a1a1a",
+    accent_color: "#dc2626",
+    text_color: "#ffffff",
   })
   const [loading, setLoading] = useState(true)
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null)
@@ -77,7 +90,7 @@ export function MusicManager({ profileId }: MusicManagerProps) {
       const response = await fetch("/api/music/tracks")
       if (response.ok) {
         const data = await response.json()
-        setTracks(data.sort((a: MusicTrack, b: MusicTrack) => a.sort_order - b.sort_order))
+        setTracks(data.sort((a: MusicTrack, b: MusicTrack) => a.order_index - b.order_index))
       } else {
         console.error("Failed to fetch tracks:", response.status)
       }
@@ -122,7 +135,7 @@ export function MusicManager({ profileId }: MusicManagerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          sort_order: editingTrack ? editingTrack.sort_order : tracks.length,
+          order_index: editingTrack ? editingTrack.order_index : tracks.length,
           is_visible: formData.is_visible,
         }),
       })
@@ -169,32 +182,7 @@ export function MusicManager({ profileId }: MusicManagerProps) {
     }
   }
 
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return
-
-    const items = Array.from(tracks)
-    const [reorderedItem] = items.splice(result.source.index, 1)
-    items.splice(result.destination.index, 0, reorderedItem)
-
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      sort_order: index,
-    }))
-
-    setTracks(updatedItems)
-
-    try {
-      await fetch("/api/music/tracks/reorder", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tracks: updatedItems.map((item) => ({ id: item.id, sort_order: item.sort_order })),
-        }),
-      })
-    } catch (error) {
-      console.error("Error reordering music tracks:", error)
-    }
-  }
+  
 
   const handleSettingsUpdate = async (newSettings: Partial<PlayerSettings>) => {
     const updatedSettings = { ...settings, ...newSettings }
@@ -271,12 +259,12 @@ export function MusicManager({ profileId }: MusicManagerProps) {
 
           <TabsContent value="tracks" className="space-y-4">
             <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">Manage your music tracks</p>
+              <p className="text-sm text-muted-foreground">Manage your music track (1 track maximum)</p>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={openAddDialog} size="sm">
+                  <Button onClick={openAddDialog} size="sm" disabled={tracks.length >= 1}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Track
+                    {tracks.length >= 1 ? 'Track Added' : 'Add Track'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
@@ -361,11 +349,11 @@ export function MusicManager({ profileId }: MusicManagerProps) {
 
                     <div className="flex items-center space-x-2">
                       <Switch
-                        id="is_active"
-                        checked={formData.is_active}
-                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                        id="is_visible"
+                        checked={formData.is_visible}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
                       />
-                      <Label htmlFor="is_active">Active (visible on profile)</Label>
+                      <Label htmlFor="is_visible">Active (visible on profile)</Label>
                     </div>
 
                     <div className="flex gap-2 pt-4">
@@ -381,69 +369,52 @@ export function MusicManager({ profileId }: MusicManagerProps) {
               </Dialog>
             </div>
 
-            {tracks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Music className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No music tracks added yet</p>
-                <p className="text-sm">Add your first track to get started</p>
-              </div>
-            ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="music-tracks">
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                      {tracks.map((track, index) => (
-                        <Draggable key={track.id} draggableId={track.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
-                                snapshot.isDragging ? "bg-muted" : "hover:bg-muted/50"
-                              } ${!track.is_active ? "opacity-50" : ""}`}
-                            >
-                              <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                                <GripVertical className="w-4 h-4 text-muted-foreground" />
-                              </div>
+                         {tracks.length === 0 ? (
+               <div className="text-center py-8 text-muted-foreground">
+                 <Music className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                 <p>No music track added yet</p>
+                 <p className="text-sm">Add your track to get started</p>
+               </div>
+             ) : (
+               <div className="space-y-2">
+                 {tracks.map((track) => (
+                   <div
+                     key={track.id}
+                     className={`flex items-center gap-3 p-3 border rounded-lg transition-colors hover:bg-muted/50 ${
+                       !track.is_visible ? "opacity-50" : ""
+                     }`}
+                   >
+                     {track.cover_image_url && (
+                       <img
+                         src={track.cover_image_url || "/placeholder.svg"}
+                         alt={track.title}
+                         className="w-10 h-10 rounded object-cover"
+                       />
+                     )}
 
-                              {track.cover_image_url && (
-                                <img
-                                  src={track.cover_image_url || "/placeholder.svg"}
-                                  alt={track.title}
-                                  className="w-10 h-10 rounded object-cover"
-                                />
-                              )}
+                     <div className="flex-1 min-w-0">
+                       <p className="font-medium truncate">{track.title}</p>
+                       {track.artist && (
+                         <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
+                       )}
+                     </div>
 
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{track.title}</p>
-                                {track.artist && (
-                                  <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={track.is_active}
-                                  onCheckedChange={(checked) => handleToggleActive(track.id, checked)}
-                                  size="sm"
-                                />
-                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(track)}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeleteTrack(track.id)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            )}
+                     <div className="flex items-center gap-2">
+                       <Switch
+                         checked={track.is_visible}
+                         onCheckedChange={(checked) => handleToggleActive(track.id, checked)}
+                       />
+                       <Button variant="ghost" size="sm" onClick={() => openEditDialog(track)}>
+                         <Edit className="w-4 h-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" onClick={() => handleDeleteTrack(track.id)}>
+                         <Trash2 className="w-4 h-4" />
+                       </Button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             )}
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
