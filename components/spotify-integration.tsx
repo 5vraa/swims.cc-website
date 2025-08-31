@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Music, Spotify, ExternalLink, Import, Link, Unlink } from "lucide-react"
+import { Music, Music2, ExternalLink, Import, Link, Unlink } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 interface SpotifyPlaylist {
@@ -146,7 +146,7 @@ export function SpotifyIntegration({ profileId }: SpotifyIntegrationProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Spotify className="w-5 h-5" />
+            <Music2 className="w-5 h-5" />
             Spotify Integration
           </CardTitle>
         </CardHeader>
@@ -163,20 +163,20 @@ export function SpotifyIntegration({ profileId }: SpotifyIntegrationProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Spotify className="w-5 h-5" />
+          <Music2 className="w-5 h-5" />
           Spotify Integration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {!isConnected ? (
           <div className="text-center py-8">
-            <Spotify className="w-16 h-16 mx-auto mb-4 text-green-500" />
+            <Music2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
             <h3 className="text-lg font-semibold mb-2">Connect Your Spotify Account</h3>
             <p className="text-muted-foreground mb-4">
               Import your favorite tracks and playlists directly from Spotify
             </p>
             <Button onClick={connectSpotify} className="bg-green-600 hover:bg-green-700">
-              <Spotify className="w-4 h-4 mr-2" />
+              <Music2 className="w-4 h-4 mr-2" />
               Connect Spotify
             </Button>
           </div>
@@ -184,7 +184,7 @@ export function SpotifyIntegration({ profileId }: SpotifyIntegrationProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950 rounded-lg">
               <div className="flex items-center gap-3">
-                <Spotify className="w-6 h-6 text-green-600" />
+                <Music2 className="w-6 h-6 text-green-600" />
                 <div>
                   <p className="font-medium text-green-900 dark:text-green-100">
                     Connected to Spotify
