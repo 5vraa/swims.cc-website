@@ -136,10 +136,19 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     try {
       setLoading(true)
       
-      // Get profile by username
+      // Single optimized query with all related data
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(`
+          *,
+          social_links!inner(*),
+          music_tracks!inner(*),
+          user_badges!inner(
+            id,
+            awarded_at,
+            badge:badges(*)
+          )
+        `)
         .ilike("username", normalizedUsername)
         .eq("is_public", true)
         .maybeSingle()
@@ -157,50 +166,26 @@ export default function PublicProfilePage({ params }: { params: { username: stri
       }
 
       setProfile(profileData)
-
-      // Load social links
-      const { data: socialData, error: socialError } = await supabase
-        .from("social_links")
-        .select("*")
-        .eq("user_id", profileData.user_id)
-        .eq("is_active", true)
-        .order("order_index")
-
-      if (!socialError && socialData) {
-        setSocialLinks(socialData)
+      
+      // Extract related data from the single query
+      if (profileData.social_links) {
+        setSocialLinks(profileData.social_links.filter((link: any) => link.is_active))
+      }
+      
+      if (profileData.music_tracks) {
+        setMusicTracks(profileData.music_tracks.filter((track: any) => track.is_active))
+      }
+      
+      if (profileData.user_badges) {
+        setUserBadges(profileData.user_badges)
       }
 
-      // Load music tracks
-      const { data: musicData, error: musicError } = await supabase
-        .from("music_tracks")
-        .select("*")
-        .eq("user_id", profileData.user_id)
-        .eq("is_active", true)
-        .order("order_index")
-
-      if (!musicError && musicData) {
-        setMusicTracks(musicData)
-      }
-
-      // Load user badges
-      const { data: badgesData, error: badgesError } = await supabase
-        .from("user_badges")
-        .select(`
-          id,
-          awarded_at,
-          badge:badges(*)
-        `)
-        .eq("user_id", profileData.user_id)
-
-      if (!badgesError && badgesData) {
-        setUserBadges(badgesData)
-      }
-
-      // Increment view count
-      await supabase
+      // Increment view count (non-blocking)
+      supabase
         .from("profiles")
         .update({ view_count: (profileData.view_count || 0) + 1 })
         .eq("id", profileData.id)
+        .then(() => {}) // Fire and forget
 
     } catch (err) {
       console.error("Error loading profile:", err)
@@ -227,39 +212,17 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         <div className="absolute inset-0 bg-black/60"></div>
         <div className="relative z-10 h-full flex items-center justify-center px-4 py-8">
           <div className="max-w-2xl w-full text-center">
-            {/* Animated Profile Card Skeleton */}
-            <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 animate-pulse">
-              {/* Avatar Skeleton */}
-              <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-6 animate-pulse"></div>
+            <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8">
+              <div className="w-24 h-24 bg-gray-600 rounded-full mx-auto mb-6"></div>
+              <div className="h-8 bg-gray-600 rounded w-48 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-600 rounded w-full mx-auto mb-2"></div>
+              <div className="h-4 bg-gray-600 rounded w-3/4 mx-auto mb-6"></div>
               
-              {/* Name Skeleton */}
-              <div className="h-8 bg-gray-600 rounded w-48 mx-auto mb-4 animate-pulse"></div>
-              
-              {/* Bio Skeleton */}
-              <div className="space-y-2 mb-6">
-                <div className="h-4 bg-gray-600 rounded w-full mx-auto"></div>
-                <div className="h-4 bg-gray-600 rounded w-3/4 mx-auto"></div>
+              {/* Simple Loading Spinner */}
+              <div className="flex justify-center mb-4">
+                <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
-              
-              {/* Badges Skeleton */}
-              <div className="flex justify-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
-                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
-                <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse"></div>
-              </div>
-              
-              {/* Button Skeleton */}
-              <div className="h-12 bg-gray-600 rounded w-32 mx-auto animate-pulse"></div>
-              
-              {/* Loading Text */}
-              <div className="mt-6">
-                <div className="flex justify-center space-x-2 mb-2">
-                  <div className="w-2 h-2 bg-red-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                </div>
-                <p className="text-gray-300 text-sm">Loading amazing profile...</p>
-              </div>
+              <p className="text-gray-300 text-sm">Loading profile...</p>
             </div>
           </div>
         </div>

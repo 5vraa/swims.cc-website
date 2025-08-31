@@ -41,8 +41,7 @@ export default function ExplorePage() {
       setError(null)
       const supabase = createClient()
 
-      console.log("Loading profiles with filter:", filter, "sort:", sortBy)
-      
+      // Single optimized query with all conditions
       let query = supabase
         .from("profiles")
         .select(`
@@ -58,14 +57,16 @@ export default function ExplorePage() {
           is_premium,
           created_at
         `)
-        .eq("is_public", true)
-        .limit(50)
+        .limit(20) // Reduced limit for faster loading
 
-      // Apply filters
+      // Apply filters efficiently
       if (filter === "verified") {
         query = query.eq("is_verified", true)
       } else if (filter === "premium") {
         query = query.eq("is_premium", true)
+      } else {
+        // For "all" filter, don't add extra conditions - just get profiles
+        query = query.eq("is_public", true)
       }
 
       // Apply sorting
@@ -82,38 +83,8 @@ export default function ExplorePage() {
         throw error
       }
 
-      console.log("Profiles loaded:", data?.length || 0, "profiles")
-      console.log("Sample profile:", data?.[0])
-      
-      // If no public profiles found, try to get all profiles for demo
-      if (!data || data.length === 0) {
-        console.log("No public profiles found, trying to get all profiles...")
-        const { data: allProfiles, error: allError } = await supabase
-          .from("profiles")
-          .select(`
-            id,
-            username,
-            display_name,
-            bio,
-            avatar_url,
-            background_color,
-            background_image_url,
-            view_count,
-            is_verified,
-            is_premium,
-            created_at
-          `)
-          .limit(20)
-        
-        if (!allError && allProfiles) {
-          console.log("Found", allProfiles.length, "total profiles")
-          setProfiles(allProfiles)
-        } else {
-          setProfiles([])
-        }
-      } else {
-        setProfiles(data)
-      }
+      // Set profiles immediately - no fallback queries
+      setProfiles(data || [])
     } catch (error) {
       console.error("Error loading profiles:", error)
       setError("Failed to load profiles")
@@ -149,40 +120,14 @@ export default function ExplorePage() {
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
         <div className="relative z-10 px-6 py-16 text-center">
           <div className="max-w-4xl mx-auto">
-            {/* Animated Loading Header */}
-            <div className="mb-8">
-              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 animate-pulse">
-                Exploring Amazing Profiles
-              </h1>
-              <div className="flex justify-center space-x-2">
-                <div className="w-3 h-3 bg-red-400 rounded-full animate-bounce"></div>
-                <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-              </div>
-            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+              Explore Amazing Profiles
+            </h1>
+            <p className="text-xl text-gray-300 mb-8">Loading profiles...</p>
             
-            {/* Loading Skeleton Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-black/20 backdrop-blur-md border border-gray-700/50 rounded-xl p-6 animate-pulse">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-16 h-16 bg-gray-600 rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-600 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-600 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-600 rounded"></div>
-                    <div className="h-3 bg-gray-600 rounded w-5/6"></div>
-                  </div>
-                  <div className="mt-4 flex justify-between">
-                    <div className="h-3 bg-gray-600 rounded w-16"></div>
-                    <div className="h-3 bg-gray-600 rounded w-20"></div>
-                  </div>
-                  <div className="mt-4 h-10 bg-gray-600 rounded"></div>
-                </div>
-              ))}
+            {/* Simple Loading Spinner */}
+            <div className="flex justify-center">
+              <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           </div>
         </div>
@@ -237,15 +182,7 @@ export default function ExplorePage() {
                </div>
              </div>
              
-             {/* Debug Info - Remove this in production */}
-             {process.env.NODE_ENV === 'development' && (
-               <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-8">
-                 <p className="text-yellow-200 text-sm">
-                   <strong>Debug:</strong> Found {profiles.length} profiles. 
-                   {profiles.length > 0 && ` First profile: ${profiles[0]?.username || 'Unknown'}`}
-                 </p>
-               </div>
-             )}
+             
           </div>
         </div>
       </div>
