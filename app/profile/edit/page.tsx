@@ -35,13 +35,8 @@ interface Profile {
   discord_authorized: boolean
   spotify_connected: boolean
   spotify_username: string | null
-  roblox_username: string | null
-  github_username: string | null
-  twitter_username: string | null
-  instagram_username: string | null
-  youtube_channel: string | null
-  twitch_username: string | null
-  tiktok_username: string | null
+
+
   role: string | null
   view_count: number
   featured_badge_id: string | null
@@ -59,12 +54,8 @@ interface Profile {
   reveal_title: string
   reveal_message: string
   reveal_button: string
-  steam_username: string | null
-  epic_games_username: string | null
-  battlenet_username: string | null
-  discord_nitro: boolean | null
-  reddit_username: string | null
-  linkedin_username: string | null
+
+  email: string | null
 }
 
 export default function EditProfilePage() {
@@ -263,19 +254,7 @@ export default function EditProfilePage() {
           reveal_title: profile.reveal_title,
           reveal_message: profile.reveal_message,
           reveal_button: profile.reveal_button,
-          roblox_username: profile.roblox_username,
-          github_username: profile.github_username,
-          twitter_username: profile.twitter_username,
-          instagram_username: profile.instagram_username,
-          youtube_channel: profile.youtube_channel,
-          twitch_username: profile.twitch_username,
-          tiktok_username: profile.tiktok_username,
-          reddit_username: profile.reddit_username,
-          linkedin_username: profile.linkedin_username,
-          steam_username: profile.steam_username,
-          epic_games_username: profile.epic_games_username,
-          battlenet_username: profile.battlenet_username,
-          discord_nitro: profile.discord_nitro
+
         })
         .eq("id", profile.id)
 
@@ -427,6 +406,121 @@ export default function EditProfilePage() {
             {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+                {/* Profile Information Section */}
+                <Card className="dashboard-card">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <User className="w-6 h-6 text-blue-400" />
+                      <CardTitle className="text-xl text-white">Profile Information</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Update your basic profile details
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="username" className="text-white font-medium">Username</Label>
+                      <Input
+                        id="username"
+                        value={profile.username}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, username: e.target.value } : null)}
+                        className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="display_name" className="text-white font-medium">Display Name</Label>
+                      <Input
+                        id="display_name"
+                        value={profile.display_name || ""}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, display_name: e.target.value } : null)}
+                        placeholder="Enter your display name"
+                        className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="bio" className="text-white font-medium">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={profile.bio || ""}
+                        onChange={(e) => setProfile(prev => prev ? { ...prev, bio: e.target.value } : null)}
+                        placeholder="Tell people about yourself..."
+                        rows={3}
+                        className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="pt-4">
+                      <Button 
+                        onClick={saveProfile} 
+                        disabled={saving} 
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl text-lg"
+                      >
+                        {saving ? "Saving..." : "Save Profile"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Avatar & Background Section */}
+                <Card className="dashboard-card">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <Palette className="w-6 h-6 text-purple-400" />
+                      <CardTitle className="text-xl text-white">Profile Media</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Customize your profile appearance
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label className="text-white font-medium">Profile Picture</Label>
+                      <div className="mt-2">
+                        <FileUpload
+                          currentUrl={profile.avatar_url}
+                          onUpload={handleAvatarUpload}
+                          accept="image/*"
+                          type="image"
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-white font-medium">Background Image</Label>
+                      <div className="mt-2">
+                        <FileUpload
+                          currentUrl={profile.background_image_url}
+                          onUpload={handleBannerUpload}
+                          accept="image/*"
+                          type="image"
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background_color" className="text-white font-medium">Background Color</Label>
+                      <div className="mt-2 flex items-center gap-3">
+                        <Input
+                          id="background_color"
+                          type="color"
+                          value={profile.background_color}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
+                          className="w-16 h-10 p-1 bg-transparent border-gray-700/50 rounded-lg"
+                        />
+                        <Input
+                          value={profile.background_color}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, background_color: e.target.value } : null)}
+                          className="bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Your Badges Section */}
                 <Card className="dashboard-card">
                   <CardHeader className="pb-4">
@@ -1014,114 +1108,83 @@ export default function EditProfilePage() {
                     </div>
 
                     {/* Social Media Usernames */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-4">
-                                                 <div>
-                           <div className="flex items-center gap-2 mb-2">
-                             <img 
-                               src="https://cdn3.emoji.gg/emojis/4680-roblox.png" 
-                               alt="Roblox" 
-                               className="w-5 h-5 object-contain"
-                             />
-                             <Label htmlFor="roblox_username" className="text-white font-medium">Roblox Username</Label>
-                           </div>
-                           <Input
-                             id="roblox_username"
-                             value={profile.roblox_username || ""}
-                             onChange={(e) => setProfile(prev => prev ? { ...prev, roblox_username: e.target.value } : null)}
-                             placeholder="Your Roblox username"
-                             className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                           />
-                         </div>
-                        
-                        <div>
-                          <Label htmlFor="github_username" className="text-white font-medium">GitHub Username</Label>
-                          <Input
-                            id="github_username"
-                            value={profile.github_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, github_username: e.target.value } : null)}
-                            placeholder="Your GitHub username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="twitter_username" className="text-white font-medium">Twitter Username</Label>
-                          <Input
-                            id="twitter_username"
-                            value={profile.twitter_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, twitter_username: e.target.value } : null)}
-                            placeholder="Your Twitter username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="instagram_username" className="text-white font-medium">Instagram Username</Label>
-                          <Input
-                            id="instagram_username"
-                            value={profile.instagram_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, instagram_username: e.target.value } : null)}
-                            placeholder="Your Instagram username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-white">Account Security</h3>
+                      
+                      {/* Email Change */}
+                      <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <h4 className="text-lg font-semibold text-white mb-3">Change Email</h4>
+                        <p className="text-gray-400 text-sm mb-4">
+                          Update your email address. You'll need to verify the new email.
+                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="current_email" className="text-gray-300">Current Email</Label>
+                            <Input
+                              id="current_email"
+                              value={profile.email || ""}
+                              disabled
+                              className="mt-2 bg-gray-700/50 border-gray-600 text-gray-400"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="new_email" className="text-white">New Email</Label>
+                            <Input
+                              id="new_email"
+                              type="email"
+                              placeholder="Enter new email address"
+                              className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            />
+                          </div>
+                          <Button 
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                          >
+                            Update Email
+                          </Button>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="youtube_channel" className="text-white font-medium">YouTube Channel</Label>
-                          <Input
-                            id="youtube_channel"
-                            value={profile.youtube_channel || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, youtube_channel: e.target.value } : null)}
-                            placeholder="Your YouTube channel name"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="twitch_username" className="text-white font-medium">Twitch Username</Label>
-                          <Input
-                            id="twitch_username"
-                            value={profile.twitch_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, twitch_username: e.target.value } : null)}
-                            placeholder="Your Twitch username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="tiktok_username" className="text-white font-medium">TikTok Username</Label>
-                          <Input
-                            id="tiktok_username"
-                            value={profile.tiktok_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, tiktok_username: e.target.value } : null)}
-                            placeholder="Your TikTok username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="reddit_username" className="text-white font-medium">Reddit Username</Label>
-                          <Input
-                            id="reddit_username"
-                            value={profile.reddit_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, reddit_username: e.target.value } : null)}
-                            placeholder="Your Reddit username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="linkedin_username" className="text-white font-medium">LinkedIn Username</Label>
-                          <Input
-                            id="linkedin_username"
-                            value={profile.linkedin_username || ""}
-                            onChange={(e) => setProfile(prev => prev ? { ...prev, linkedin_username: e.target.value } : null)}
-                            placeholder="Your LinkedIn username"
-                            className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
+                      {/* Password Change */}
+                      <div className="p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <h4 className="text-lg font-semibold text-white mb-3">Change Password</h4>
+                        <p className="text-gray-400 text-sm mb-4">
+                          Update your password to keep your account secure.
+                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <Label htmlFor="current_password" className="text-white">Current Password</Label>
+                            <Input
+                              id="current_password"
+                              type="password"
+                              placeholder="Enter current password"
+                              className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="new_password" className="text-white">New Password</Label>
+                            <Input
+                              id="new_password"
+                              type="password"
+                              placeholder="Enter new password"
+                              className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="confirm_password" className="text-white">Confirm New Password</Label>
+                            <Input
+                              id="confirm_password"
+                              type="password"
+                              placeholder="Confirm new password"
+                              className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            />
+                          </div>
+                          <Button 
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white font-medium"
+                          >
+                            Update Password
+                          </Button>
                         </div>
                       </div>
                     </div>
