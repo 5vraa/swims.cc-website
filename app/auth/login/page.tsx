@@ -24,6 +24,7 @@ export default function LoginPage() {
       return
     }
 
+    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -31,14 +32,28 @@ export default function LoginPage() {
       console.log("Starting Discord OAuth...")
       console.log("Username:", username.trim())
       
-      // Hardcoded Discord OAuth URL
-      const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=1410097014456324106&response_type=code&redirect_uri=${encodeURIComponent('https://lzgwyvowwanirtolefpj.supabase.co/auth/v1/callback')}&scope=identify+guilds+email+guilds.members.read&state=${encodeURIComponent(username.trim())}`
+      // Store username in localStorage for the callback to use
+      localStorage.setItem('login_username', username.trim())
       
-      console.log("Redirecting to Discord OAuth:", discordAuthUrl)
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
       
-      // Redirect to Discord OAuth
-      window.location.href = discordAuthUrl
+      console.log("Discord OAuth response:", { data, error })
       
+      if (error) {
+        console.error("Discord OAuth error:", error)
+        throw error
+      }
+      
+      console.log("Discord OAuth initiated successfully")
     } catch (error: unknown) {
       console.error("Discord OAuth failed:", error)
       setError(error instanceof Error ? error.message : "An error occurred")

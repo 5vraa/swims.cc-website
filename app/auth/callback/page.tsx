@@ -173,9 +173,14 @@ export default function AuthCallbackPage() {
       } else {
         console.log("Creating new profile...")
         // Create new profile
-        // Try to get username from URL params first (from signup form or state parameter)
-        const urlParams = new URLSearchParams(window.location.search)
-        const formUsername = urlParams.get('username') || urlParams.get('state')
+        // Try to get username from localStorage first (from signup/login form)
+        const signupUsername = localStorage.getItem('signup_username')
+        const loginUsername = localStorage.getItem('login_username')
+        const formUsername = signupUsername || loginUsername
+        
+        // Clear the stored username
+        if (signupUsername) localStorage.removeItem('signup_username')
+        if (loginUsername) localStorage.removeItem('login_username')
         
         const baseUsername = String(
           formUsername || user.user_metadata?.username || user.email?.split("@")[0] || "user"
