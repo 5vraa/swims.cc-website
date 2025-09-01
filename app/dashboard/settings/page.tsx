@@ -61,11 +61,20 @@ export default function DashboardSettings() {
   const handleSave = async () => {
     if (!profile) return
     
+    // Validate username is not empty
+    if (!profile.username || profile.username.trim() === '') {
+      alert('Username is required and cannot be empty')
+      return
+    }
+    
     setSaving(true)
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(profile)
+        .update({
+          ...profile,
+          username: profile.username.trim()
+        })
         .eq('id', profile.id)
       
       if (error) throw error
@@ -119,13 +128,20 @@ export default function DashboardSettings() {
             <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Username</label>
+                <label className="block text-sm font-medium mb-2">
+                  Username <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="text"
                   value={profile.username || ''}
                   onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value }))}
                   className="w-full px-3 py-2 bg-background border border-border rounded"
+                  placeholder="Enter your username"
+                  required
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Username is required and cannot be empty
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Display Name</label>

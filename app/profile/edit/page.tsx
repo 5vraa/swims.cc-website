@@ -241,6 +241,12 @@ export default function EditProfilePage() {
   const saveProfile = async () => {
     if (!profile) return
 
+    // Validate username is not empty
+    if (!profile.username || profile.username.trim() === '') {
+      setError("Username is required and cannot be empty")
+      return
+    }
+
     try {
       setSaving(true)
       setError(null)
@@ -249,7 +255,7 @@ export default function EditProfilePage() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          username: profile.username,
+          username: profile.username.trim(),
           display_name: profile.display_name,
           bio: profile.bio,
           background_color: profile.background_color,
@@ -455,13 +461,20 @@ export default function EditProfilePage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="username" className="text-white font-medium">Username</Label>
+                      <Label htmlFor="username" className="text-white font-medium">
+                        Username <span className="text-red-400">*</span>
+                      </Label>
                       <Input
                         id="username"
                         value={profile.username}
                         onChange={(e) => setProfile(prev => prev ? { ...prev, username: e.target.value } : null)}
                         className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="Enter your username"
+                        required
                       />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Username is required and cannot be empty
+                      </p>
                     </div>
                     
                     <div>

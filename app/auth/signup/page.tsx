@@ -23,6 +23,11 @@ export default function SignUpPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!username || username.trim() === '') {
+      setError("Username is required and cannot be empty")
+      return
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return
@@ -65,7 +70,9 @@ export default function SignUpPage() {
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">
               <div>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">
+                  Username <span className="text-red-400">*</span>
+                </Label>
                 <Input
                   id="username"
                   type="text"
@@ -76,7 +83,12 @@ export default function SignUpPage() {
                   className="bg-background border-border"
                   maxLength={50}
                 />
-                <p className="text-xs text-muted-foreground mt-1">This will be your profile URL: swims.cc/{username}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This will be your profile URL: swims.cc/{username || 'your-username'}
+                </p>
+                <p className="text-xs text-red-400 mt-1">
+                  Username is required and cannot be empty
+                </p>
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
