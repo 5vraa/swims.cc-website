@@ -13,7 +13,6 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { SocialLinksManager } from "@/components/social-links-manager"
 import { MusicManager } from "@/components/music-manager"
-import { BadgeSelector } from "@/components/badge-selector"
 import { FileUpload } from "@/components/file-upload"
 import dynamic from "next/dynamic"
 
@@ -23,10 +22,6 @@ const LazySocialLinksManager = dynamic(() => import("@/components/social-links-m
 })
 
 const LazyMusicManager = dynamic(() => import("@/components/music-manager").then(mod => ({ default: mod.MusicManager })), {
-  loading: () => <div className="h-32 bg-gray-700 rounded animate-pulse"></div>
-})
-
-const LazyBadgeSelector = dynamic(() => import("@/components/badge-selector").then(mod => ({ default: mod.BadgeSelector })), {
   loading: () => <div className="h-32 bg-gray-700 rounded animate-pulse"></div>
 })
 
@@ -770,19 +765,15 @@ export default function EditProfilePage() {
                   Badges
                 </CardTitle>
                 <CardDescription>
-                  Manage your profile badges
+                  Badge system coming soon!
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <LazyBadgeSelector 
-                  currentBadgeId={profile.featured_badge_id}
-                  onBadgeSelect={(badgeId: string) => {
-                    setProfile(prev => prev ? { ...prev, featured_badge_id: badgeId } : null)
-                  }}
-                  isPremium={profile.is_premium}
-                  isVerified={profile.is_verified}
-                  viewCount={profile.view_count || 0}
-                />
+                <div className="text-center py-8">
+                  <Crown className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Badge System</h3>
+                  <p className="text-gray-400">The badge system will be available in a future update.</p>
+                </div>
               </CardContent>
             </Card>
           )}
