@@ -162,22 +162,22 @@ export function SiteHeader() {
             <div className="hidden md:flex items-center space-x-4">
               {!user ? (
                 <>
-                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
-                  <Link href="/page/help" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Help Center</Link>
-                  <Link href="/page/pricing" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Pricing</Link>
-                  <Link href="/auth/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Login</Link>
-                  <Link href="/auth/signup" className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors">Sign Up Free</Link>
+                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Explore</Link>
+                  <Link href="/page/help" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Help Center</Link>
+                  <Link href="/page/pricing" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Pricing</Link>
+                  <Link href="/auth/login" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Login</Link>
+                  <Link href="/auth/signup" className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors" prefetch={true}>Sign Up Free</Link>
                 </>
               ) : (
                 <>
-                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Explore</Link>
+                  <Link href="/page/explore" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Explore</Link>
                   {username && (
-                    <Link href={`/${username}`} className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Preview Profile</Link>
+                    <Link href={`/${username}`} className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Preview Profile</Link>
                   )}
                   {showStaff && (
-                    <Link href="/admin" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Admin</Link>
+                    <Link href="/admin" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Admin</Link>
                   )}
-                  <Link href="/profile/edit" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Dashboard</Link>
+                  <Link href="/profile/edit" className="text-gray-300 hover:text-white text-sm font-medium transition-colors" prefetch={true}>Dashboard</Link>
                   <button 
                     onClick={handleLogout} 
                     disabled={logoutLoading}
@@ -208,6 +208,7 @@ export function SiteHeader() {
                       href="/page/explore" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Explore
                     </Link>
@@ -215,6 +216,7 @@ export function SiteHeader() {
                       href="/page/help" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Help Center
                     </Link>
@@ -222,6 +224,7 @@ export function SiteHeader() {
                       href="/page/pricing" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Pricing
                     </Link>
@@ -229,6 +232,7 @@ export function SiteHeader() {
                       href="/auth/login" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Login
                     </Link>
@@ -236,6 +240,7 @@ export function SiteHeader() {
                       href="/auth/signup" 
                       className="text-white px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors inline-block text-center"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Sign Up Free
                     </Link>
@@ -246,6 +251,7 @@ export function SiteHeader() {
                       href="/page/explore" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Explore
                     </Link>
@@ -254,6 +260,7 @@ export function SiteHeader() {
                         href={`/${username}`} 
                         className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                         onClick={() => setMobileMenuOpen(false)}
+                        prefetch={true}
                       >
                         Preview Profile
                       </Link>
@@ -263,6 +270,7 @@ export function SiteHeader() {
                         href="/admin" 
                         className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                         onClick={() => setMobileMenuOpen(false)}
+                        prefetch={true}
                       >
                         Admin
                       </Link>
@@ -271,6 +279,7 @@ export function SiteHeader() {
                       href="/profile/edit" 
                       className="text-gray-300 hover:text-white text-sm font-medium transition-colors py-2"
                       onClick={() => setMobileMenuOpen(false)}
+                      prefetch={true}
                     >
                       Dashboard
                     </Link>

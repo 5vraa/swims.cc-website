@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
+import { PagePreloader } from '@/components/page-preloader'
 import { createClient } from '@/lib/supabase/server'
 import { hasDiscordRole } from '@/lib/discord/server'
 
@@ -90,6 +91,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-screen bg-[#0f0b0c] text-foreground">
+        <PagePreloader />
         <SiteHeader />
         <main className="flex-1 relative z-10 bg-[#0f0b0c]">
           {children}
@@ -129,14 +131,14 @@ export default async function RootLayout({
                 <h4 className="text-white font-semibold mb-4">General</h4>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <a href="/auth/login" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/auth/login" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Login
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="/auth/signup" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/auth/signup" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Sign Up
-                    </a>
+                    </Link>
                   </li>
                   <li>
                     <a href="#pricing" className="text-gray-400 hover:text-red-400 transition-colors">
@@ -155,19 +157,19 @@ export default async function RootLayout({
                 <h4 className="text-white font-semibold mb-4">Resources</h4>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <a href="/page/help" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/help" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Help Center
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="/page/changelog" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/changelog" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Changelog
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="/page/redeem" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/redeem" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Redeem Code
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>
@@ -197,19 +199,19 @@ export default async function RootLayout({
                 <h4 className="text-white font-semibold mb-4">Legal</h4>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <a href="/page/terms" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/terms" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Terms of Service
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="/page/copyright" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/copyright" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Copyright Policy
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="/page/privacy" className="text-gray-400 hover:text-red-400 transition-colors">
+                    <Link href="/page/privacy" className="text-gray-400 hover:text-red-400 transition-colors" prefetch={true}>
                       Privacy Policy
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>
