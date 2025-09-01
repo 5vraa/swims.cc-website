@@ -50,14 +50,13 @@ export async function POST(request: NextRequest) {
       const { data: uploadData, error: uploadError } = await supabase
         .from('file_uploads')
         .insert({
-          profile_id: profile.id,
-          file_name: fileName,
-          file_url: `data:${file.type || 'application/octet-stream'};base64,${base64Data}`,
-          file_type: file.type || 'application/octet-stream',
+          user_id: user.id,
+          filename: fileName,
+          original_name: file.name,
           file_size: file.size,
           mime_type: file.type || 'application/octet-stream',
-          is_public: false,
-          created_at: new Date().toISOString()
+          file_data: base64Data,
+          bucket_name: 'database'
         })
         .select()
         .single()
@@ -74,17 +73,20 @@ export async function POST(request: NextRequest) {
             sql: `
               CREATE TABLE IF NOT EXISTS file_uploads (
                 id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-                profile_id UUID NOT NULL,
-                file_name TEXT NOT NULL,
-                file_url TEXT NOT NULL,
-                file_type TEXT NOT NULL,
-                file_size INTEGER,
-                mime_type TEXT,
-                is_public BOOLEAN DEFAULT false,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                user_id UUID NOT NULL,
+                filename TEXT NOT NULL,
+                original_name TEXT NOT NULL,
+                file_size BIGINT NOT NULL,
+                mime_type TEXT NOT NULL,
+                file_data TEXT NOT NULL,
+                bucket_name TEXT NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
               );
               
-              CREATE INDEX IF NOT EXISTS idx_file_uploads_profile_id ON file_uploads(profile_id);
+              CREATE INDEX IF NOT EXISTS idx_file_uploads_user_id ON file_uploads(user_id);
+              CREATE INDEX IF NOT EXISTS idx_file_uploads_filename ON file_uploads(filename);
+              CREATE INDEX IF NOT EXISTS idx_file_uploads_created_at ON file_uploads(created_at);
             `
           })
           
@@ -100,14 +102,13 @@ export async function POST(request: NextRequest) {
           const { data: retryData, error: retryError } = await supabase
             .from('file_uploads')
             .insert({
-              profile_id: profile.id,
-              file_name: fileName,
-              file_url: `data:${file.type || 'application/octet-stream'};base64,${base64Data}`,
-              file_type: file.type || 'application/octet-stream',
+              user_id: user.id,
+              filename: fileName,
+              original_name: file.name,
               file_size: file.size,
               mime_type: file.type || 'application/octet-stream',
-              is_public: false,
-              created_at: new Date().toISOString()
+              file_data: base64Data,
+              bucket_name: 'database'
             })
             .select()
             .single()

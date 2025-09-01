@@ -18,14 +18,32 @@ export default function HomePage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, user_id, username, display_name, avatar_url")
-        .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .limit(40)
-      const reserved = new Set(["dashboard","admin","auth","profile","privacy","terms","changelog","status","copyright","redeem"])
-      setPublicProfiles((data || []).filter((p: any) => p.username && !reserved.has(String(p.username).toLowerCase())))
+      try {
+        // Use the materialized view if available, otherwise fallback to regular query
+        const { data, error } = await supabase
+          .from("popular_profiles")
+          .select("id, username, display_name, avatar_url")
+          .limit(40)
+
+        if (error || !data || data.length === 0) {
+          // Fallback to regular profiles table
+          const { data: fallbackData } = await supabase
+            .from("profiles")
+            .select("id, user_id, username, display_name, avatar_url")
+            .eq("is_public", true)
+            .order("view_count", { ascending: false })
+            .limit(40)
+          
+          const reserved = new Set(["dashboard","admin","auth","profile","privacy","terms","changelog","status","copyright","redeem"])
+          setPublicProfiles((fallbackData || []).filter((p: any) => p.username && !reserved.has(String(p.username).toLowerCase())))
+        } else {
+          const reserved = new Set(["dashboard","admin","auth","profile","privacy","terms","changelog","status","copyright","redeem"])
+          setPublicProfiles((data || []).filter((p: any) => p.username && !reserved.has(String(p.username).toLowerCase())))
+        }
+      } catch (error) {
+        console.error("Error loading profiles:", error)
+        setPublicProfiles([])
+      }
     }
     load()
   }, [])

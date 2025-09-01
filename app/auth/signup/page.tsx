@@ -10,51 +10,44 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { MessageSquare, Loader2, UserPlus } from "lucide-react"
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleDiscord = async () => {
     if (!username || username.trim() === '') {
       setError("Username is required and cannot be empty")
       return
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-
-    if (password.length < 6) {
+    if (!password || password.length < 6) {
       setError("Password must be at least 6 characters")
       return
     }
 
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password
-      })
-
-      if (signUpError) throw signUpError
-
-      // Redirect to success page
-      router.push("/auth/signup-success")
+      console.log("Starting Discord OAuth...")
+      console.log("Username:", username.trim())
+      
+      // Hardcoded Discord OAuth URL
+      const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=1410097014456324106&response_type=code&redirect_uri=${encodeURIComponent('https://lzgwyvowwanirtolefpj.supabase.co/auth/v1/callback')}&scope=identify+guilds+email+guilds.members.read&state=${encodeURIComponent(username.trim())}`
+      
+      console.log("Redirecting to Discord OAuth:", discordAuthUrl)
+      
+      // Redirect to Discord OAuth
+      window.location.href = discordAuthUrl
+      
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred during sign up")
-    } finally {
+      console.error("Discord OAuth failed:", error)
+      setError(error instanceof Error ? error.message : "An error occurred")
       setIsLoading(false)
     }
   }
@@ -64,11 +57,14 @@ export default function SignUpPage() {
       <div className="w-full max-w-sm">
         <Card className="bg-card border-border">
           <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <UserPlus className="w-8 h-8 text-primary" />
+            </div>
             <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
             <CardDescription>Join swims.cc and create your bio page</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="username">
                   Username <span className="text-red-400">*</span>
@@ -90,18 +86,7 @@ export default function SignUpPage() {
                   Username is required and cannot be empty
                 </p>
               </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-background border-border"
-                />
-              </div>
+              
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -114,29 +99,35 @@ export default function SignUpPage() {
                   minLength={6}
                 />
               </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-background border-border"
-                  minLength={6}
-                />
-              </div>
+              
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Create Account"}
+              
+              <Button
+                onClick={handleDiscord}
+                className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Continue with Discord
+                  </>
+                )}
               </Button>
-            </form>
+            </div>
+            
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
               <Link href="/auth/login" className="text-primary hover:underline">
                 Sign in
               </Link>
             </div>
+            
             <div className="mt-2 text-center">
               <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
                 ← Back to home

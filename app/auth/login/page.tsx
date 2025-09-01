@@ -10,49 +10,40 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { MessageSquare, Loader2, LogIn } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [username, setUsername] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
+  const handleDiscord = async () => {
+    if (!username || username.trim() === '') {
+      setError("Username is required and cannot be empty")
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/profile/edit`,
-        },
-      })
-      if (error) throw error
-      router.push("/profile/edit")
+      console.log("Starting Discord OAuth...")
+      console.log("Username:", username.trim())
+      
+      // Hardcoded Discord OAuth URL
+      const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=1410097014456324106&response_type=code&redirect_uri=${encodeURIComponent('https://lzgwyvowwanirtolefpj.supabase.co/auth/v1/callback')}&scope=identify+guilds+email+guilds.members.read&state=${encodeURIComponent(username.trim())}`
+      
+      console.log("Redirecting to Discord OAuth:", discordAuthUrl)
+      
+      // Redirect to Discord OAuth
+      window.location.href = discordAuthUrl
+      
     } catch (error: unknown) {
+      console.error("Discord OAuth failed:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
-    } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleDiscord = async () => {
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "discord",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) setError(error.message)
-    setIsLoading(false)
   }
 
   return (
@@ -60,50 +51,64 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Card className="bg-card border-border">
           <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <LogIn className="w-8 h-8 text-primary" />
+            </div>
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
             <CardDescription>Sign in to your swims.cc account</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">
+                  Username <span className="text-red-400">*</span>
+                </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
+                  id="username"
+                  type="text"
+                  placeholder="your-username"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                   className="bg-background border-border"
+                  maxLength={50}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your profile username
+                </p>
+                <p className="text-xs text-red-400 mt-1">
+                  Username is required and cannot be empty
+                </p>
               </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-background border-border"
-                />
-              </div>
+              
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              
+              <Button
+                onClick={handleDiscord}
+                className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Continue with Discord
+                  </>
+                )}
               </Button>
-            </form>
+            </div>
+            
             <div className="mt-4 text-center text-sm">
               Don't have an account?{" "}
               <Link href="/auth/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
             </div>
-            <div className="mt-4">
-              <Button type="button" onClick={handleDiscord} className="w-full bg-[#5865F2] hover:bg-[#4752C4]">
-                Continue with Discord
-              </Button>
-            </div>
+            
             <div className="mt-2 text-center">
               <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
                 ← Back to home

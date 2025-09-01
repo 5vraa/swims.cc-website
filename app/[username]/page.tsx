@@ -149,12 +149,17 @@ export default function PublicProfilePage({ params }: { params: { username: stri
 
   const loadProfile = async () => {
     try {
-      // Don't show loading state - just load in background
-      
-      // First load the profile to get the user ID
+      // Optimized single query to get all profile data at once
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, user_id, username, display_name, bio, avatar_url, background_color, background_image_url, theme, is_public, is_premium, is_verified, role, view_count, created_at")
+        .select(`
+          id, user_id, username, display_name, bio, avatar_url, background_color, 
+          background_image_url, theme, is_public, is_premium, is_verified, role, 
+          view_count, created_at, card_outline_color, card_glow_color, 
+          card_glow_intensity, border_radius, font_family, font_size, font_color,
+          show_social_links, show_badges, show_stats, show_music_player,
+          enable_tilt_effects, enable_glow_effects, music_player_style
+        `)
         .ilike("username", normalizedUsername)
         .eq("is_public", true)
         .single()
@@ -164,23 +169,23 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         return
       }
 
-      // Add default values for new settings if they don't exist
+      // Add default values for missing settings
       const profileWithDefaults = {
         ...profileData,
-        card_outline_color: '#ef4444',
-        card_glow_color: '#ef4444',
-        card_glow_intensity: 0.5,
-        border_radius: 12,
-        font_family: 'Inter',
-        font_size: 'base',
-        font_color: '#ffffff',
-        show_social_links: true,
-        show_badges: true,
-        show_stats: true,
-        show_music_player: true,
-        enable_tilt_effects: true,
-        enable_glow_effects: true,
-        music_player_style: 'sleek' as const,
+        card_outline_color: profileData.card_outline_color || '#ef4444',
+        card_glow_color: profileData.card_glow_color || '#ef4444',
+        card_glow_intensity: profileData.card_glow_intensity || 0.5,
+        border_radius: profileData.border_radius || 12,
+        font_family: profileData.font_family || 'Inter',
+        font_size: profileData.font_size || 'base',
+        font_color: profileData.font_color || '#ffffff',
+        show_social_links: profileData.show_social_links ?? true,
+        show_badges: profileData.show_badges ?? true,
+        show_stats: profileData.show_stats ?? true,
+        show_music_player: profileData.show_music_player ?? true,
+        enable_tilt_effects: profileData.enable_tilt_effects ?? true,
+        enable_glow_effects: profileData.enable_glow_effects ?? true,
+        music_player_style: profileData.music_player_style || 'sleek' as const,
       }
 
       setProfile(profileWithDefaults)
@@ -192,7 +197,7 @@ export default function PublicProfilePage({ params }: { params: { username: stri
         .eq("id", profileWithDefaults.id)
         .then(() => {})
       
-      // Now load related data with the profile ID
+      // Load related data in parallel for better performance
       const [socialResult, musicResult, badgesResult] = await Promise.allSettled([
         // Social links - use profile_id
         supabase

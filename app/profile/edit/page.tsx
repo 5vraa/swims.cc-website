@@ -15,6 +15,20 @@ import { FileUpload } from "@/components/file-upload"
 import { SocialLinksManager } from "@/components/social-links-manager"
 import { MusicManager } from "@/components/music-manager"
 import { BadgeSelector } from "@/components/badge-selector"
+import dynamic from "next/dynamic"
+
+// Lazy load heavy components
+const LazySocialLinksManager = dynamic(() => import("@/components/social-links-manager").then(mod => ({ default: mod.SocialLinksManager })), {
+  loading: () => <div className="h-32 bg-gray-700 rounded animate-pulse"></div>
+})
+
+const LazyMusicManager = dynamic(() => import("@/components/music-manager").then(mod => ({ default: mod.MusicManager })), {
+  loading: () => <div className="h-32 bg-gray-700 rounded animate-pulse"></div>
+})
+
+const LazyBadgeSelector = dynamic(() => import("@/components/badge-selector").then(mod => ({ default: mod.BadgeSelector })), {
+  loading: () => <div className="h-32 bg-gray-700 rounded animate-pulse"></div>
+})
 import { SpotifyIntegration } from "@/components/spotify-integration"
 import { User, LinkIcon, Music, Palette, Settings, Eye, Crown, Star, MessageCircle, Zap, Shield, Bell, Heart } from "lucide-react"
 
@@ -71,12 +85,15 @@ interface Profile {
 
 export default function EditProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(false) // No initial loading
+  const [loading, setLoading] = useState(true) // Show loading initially
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("profile")
   const [discordStatus, setDiscordStatus] = useState<"connected" | "disconnected" | "checking">("checking")
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -92,37 +109,51 @@ export default function EditProfilePage() {
 
   const loadProfile = async () => {
     try {
-      // Load profile data first (most important)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      // Get user data first
+      const { data: { user: userData }, error: userError } = await supabase.auth.getUser()
 
-      if (!user) {
+      if (userError || !userData) {
+        console.error("User not authenticated:", userError)
         router.push("/auth/login")
         return
       }
 
-      const { data: profileData, error } = await supabase
+      // Try to get existing profile with minimal fields first
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
+        .select("id, username, display_name, email, discord_id")
+        .eq("id", userData.id)
         .maybeSingle()
 
-      if (error && (error as any).code !== "PGRST116") throw error
+      if (profileError && profileError.code !== "PGRST116") {
+        console.error("Profile error:", profileError)
+        throw profileError
+      }
 
       if (!profileData) {
+        // Profile doesn't exist, create a new one with minimal data
         const baseUsername = String(
-          (user.user_metadata as any)?.username || (user.email || "user").split("@")[0],
+          (userData.user_metadata as any)?.username || (userData.email || "user").split("@")[0],
         )
           .toLowerCase()
           .replace(/[^a-z0-9-]/g, "")
 
+        // Quick username check (only check once, don't loop)
+        const { data: existingUser } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", baseUsername)
+          .maybeSingle()
+
+        const finalUsername = existingUser ? `${baseUsername}-${Date.now()}` : baseUsername
+
         const { data: inserted, error: insertError } = await supabase
           .from("profiles")
           .insert({
-            id: user.id,
-            username: baseUsername,
-            display_name: (user.user_metadata as any)?.display_name || baseUsername,
+            id: userData.id,
+            username: finalUsername,
+            display_name: (userData.user_metadata as any)?.display_name || finalUsername,
+            email: userData.email,
             is_public: true,
             background_color: "#000000",
             card_outline_color: "#ef4444",
@@ -144,6 +175,7 @@ export default function EditProfilePage() {
           .single()
 
         if (insertError) {
+          console.error("Error creating profile:", insertError)
           if ((insertError as any).code === "23505") {
             setError("Username already taken. Please choose a different username in the editor.")
           } else {
@@ -151,19 +183,40 @@ export default function EditProfilePage() {
           }
         } else {
           setProfile(inserted as any)
+          setLoading(false)
         }
       } else {
+        // Profile exists, load full profile data in background
         setProfile(profileData as any)
+        setLoading(false) // Show the page immediately with basic data
+        
+        // Load full profile data asynchronously
+        setTimeout(async () => {
+          try {
+            const { data: fullProfile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", userData.id)
+              .single()
+            
+            if (fullProfile) {
+              setProfile(fullProfile as any)
+            }
+          } catch (error) {
+            console.error("Error loading full profile:", error)
+          }
+        }, 100)
       }
       
       // Load Discord status in background (non-blocking)
       if (profileData?.discord_id) {
-        setTimeout(() => checkDiscordStatus(), 100)
+        setTimeout(() => checkDiscordStatus(), 200)
       }
       
     } catch (error) {
       console.error("Error loading profile:", error)
-      setError("Failed to load profile")
+      setError("Failed to load profile. Please try refreshing the page.")
+      setLoading(false)
     }
   }
 
@@ -175,13 +228,21 @@ export default function EditProfilePage() {
 
     try {
       setDiscordStatus("checking")
+      
+      // Use a timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+      
       const response = await fetch('/api/discord/check-role', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ discordId: profile.discord_id })
+        body: JSON.stringify({ discordId: profile.discord_id }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         setDiscordStatus("connected")
@@ -247,6 +308,13 @@ export default function EditProfilePage() {
       return
     }
 
+    // Validate username format
+    const usernameRegex = /^[a-z0-9-]+$/
+    if (!usernameRegex.test(profile.username.trim())) {
+      setError("Username can only contain lowercase letters, numbers, and hyphens")
+      return
+    }
+
     try {
       setSaving(true)
       setError(null)
@@ -256,8 +324,8 @@ export default function EditProfilePage() {
         .from("profiles")
         .update({
           username: profile.username.trim(),
-          display_name: profile.display_name,
-          bio: profile.bio,
+          display_name: profile.display_name?.trim() || null,
+          bio: profile.bio?.trim() || null,
           background_color: profile.background_color,
           background_image_url: profile.background_image_url,
           theme: profile.theme,
@@ -276,17 +344,21 @@ export default function EditProfilePage() {
           reveal_title: profile.reveal_title,
           reveal_message: profile.reveal_message,
           reveal_button: profile.reveal_button,
-
         })
         .eq("id", profile.id)
 
-      if (error) throw error
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("Username is already taken. Please choose a different username.")
+        }
+        throw error
+      }
 
       setSuccess("Profile saved successfully!")
       setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
       console.error("Error saving profile:", error)
-      setError("Failed to save profile")
+      setError(error instanceof Error ? error.message : "Failed to save profile")
     } finally {
       setSaving(false)
     }
@@ -332,8 +404,68 @@ export default function EditProfilePage() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    if (!profile || !deletePassword) return
+
+    try {
+      setDeleteLoading(true)
+      setError(null)
+
+      // Confirm deletion
+      const confirmed = window.confirm(
+        "Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete:\n\n" +
+        "• Your profile and all data\n" +
+        "• Your social links\n" +
+        "• Your music tracks\n" +
+        "• Your analytics data\n" +
+        "• All uploaded files\n\n" +
+        "This action cannot be undone!"
+      )
+
+      if (!confirmed) {
+        setDeleteLoading(false)
+        return
+      }
+
+      // Call the delete account API
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete account')
+      }
+
+      // Clear local state immediately
+      setProfile(null)
+      
+      // Force refresh the auth state to update the header
+      await supabase.auth.refreshSession()
+      
+      // Small delay to ensure state is cleared
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force a hard redirect to ensure clean state
+      window.location.href = "/"
+      
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      setError(error instanceof Error ? error.message : "Failed to delete account")
+    } finally {
+      setDeleteLoading(false)
+      setShowDeleteDialog(false)
+      setDeletePassword("")
+    }
+  }
+
   // Show skeleton while loading instead of full loading screen
-  if (!profile) {
+  if (loading || !profile) {
     return (
       <div className="min-h-screen px-6 py-8">
         <div className="max-w-7xl mx-auto">
@@ -467,7 +599,10 @@ export default function EditProfilePage() {
                       <Input
                         id="username"
                         value={profile.username}
-                        onChange={(e) => setProfile(prev => prev ? { ...prev, username: e.target.value } : null)}
+                        onChange={(e) => {
+                          const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                          setProfile(prev => prev ? { ...prev, username: value } : null)
+                        }}
                         className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Enter your username"
                         required
@@ -969,7 +1104,7 @@ export default function EditProfilePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SocialLinksManager profileId={profile.id} />
+                  <LazySocialLinksManager profileId={profile.id} />
                 </CardContent>
               </Card>
             </div>
@@ -992,7 +1127,7 @@ export default function EditProfilePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MusicManager profileId={profile.id} />
+                  <LazyMusicManager profileId={profile.id} />
                 </CardContent>
               </Card>
             </div>
@@ -1015,7 +1150,7 @@ export default function EditProfilePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <BadgeSelector 
+                  <LazyBadgeSelector 
                     currentBadgeId={profile.featured_badge_id}
                     onBadgeSelect={(badgeId: string) => {
                       setProfile(prev => prev ? { ...prev, featured_badge_id: badgeId } : null)
@@ -1402,7 +1537,11 @@ export default function EditProfilePage() {
                     <p className="text-red-300 text-sm mb-4">
                       These actions cannot be undone. Please be careful.
                     </p>
-                    <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 font-semibold py-3 rounded-xl">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full bg-red-600 hover:bg-red-700 font-semibold py-3 rounded-xl"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
                       Delete Account
                     </Button>
                   </div>
@@ -1413,6 +1552,55 @@ export default function EditProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-red-500/30 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-red-400 mb-4">Delete Account</h3>
+            <p className="text-gray-300 mb-4">
+              This action cannot be undone. Please enter your password to confirm account deletion.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="delete-password" className="text-white font-medium">
+                  Password <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="delete-password"
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="mt-2 bg-black/30 border-gray-700/50 text-white rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteDialog(false)
+                    setDeletePassword("")
+                  }}
+                  className="flex-1 border-gray-700/50 text-gray-300 hover:text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={!deletePassword || deleteLoading}
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteLoading ? "Deleting..." : "Delete Account"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

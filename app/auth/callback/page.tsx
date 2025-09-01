@@ -81,6 +81,13 @@ export default function AuthCallbackPage() {
         throw new Error("Failed to get session after multiple attempts. Please try logging in again.")
       }
 
+      // Force refresh the session to ensure email confirmation is properly handled
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession()
+      if (refreshedSession && !refreshError) {
+        session = refreshedSession
+        console.log("Session refreshed successfully")
+      }
+
       const user = session.user
       console.log("Auth callback - User:", user.id, user.email)
 
@@ -166,8 +173,12 @@ export default function AuthCallbackPage() {
       } else {
         console.log("Creating new profile...")
         // Create new profile
+        // Try to get username from URL params first (from signup form or state parameter)
+        const urlParams = new URLSearchParams(window.location.search)
+        const formUsername = urlParams.get('username') || urlParams.get('state')
+        
         const baseUsername = String(
-          user.user_metadata?.username || user.email?.split("@")[0] || "user"
+          formUsername || user.user_metadata?.username || user.email?.split("@")[0] || "user"
         )
           .toLowerCase()
           .replace(/[^a-z0-9-]/g, "")

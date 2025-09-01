@@ -53,13 +53,16 @@ export function SiteHeader() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: any) => {
+        console.log('Auth state change:', event, session?.user?.id)
         if (session?.user) {
           setUser(session.user)
           await loadUserProfile(session.user)
         } else {
+          // Clear all user state when signed out
           setUser(null)
           setUsername(null)
           setShowStaff(false)
+          console.log('User state cleared due to sign out')
         }
       }
     )
@@ -76,10 +79,10 @@ export function SiteHeader() {
         .from('profiles')
         .select('username, role')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle() // Use maybeSingle to handle missing profiles
 
-      if (error) {
-        console.error('Could not find profile for user:', user.id, error)
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile for user:', user.id, error)
         return
       }
 
@@ -89,9 +92,16 @@ export function SiteHeader() {
         // Check if user has admin/moderator role
         const hasStaffRole = profile.role === 'admin' || profile.role === 'moderator'
         setShowStaff(hasStaffRole)
+      } else {
+        // Profile doesn't exist, set default values
+        setUsername(null)
+        setShowStaff(false)
       }
     } catch (error) {
       console.error('Error loading user profile:', error)
+      // Set default values on error
+      setUsername(null)
+      setShowStaff(false)
     }
   }
 

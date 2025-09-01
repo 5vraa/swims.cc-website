@@ -23,11 +23,23 @@ export default function DashboardSettings() {
         return
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle() // Use maybeSingle to handle missing profiles
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', profileError)
+        setLoading(false)
+        return
+      }
+
+      if (!profile) {
+        // Profile doesn't exist, redirect to profile edit to create one
+        router.push('/profile/edit')
+        return
+      }
 
       // Add default values for new settings if they don't exist
       const profileWithDefaults = {
