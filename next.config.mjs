@@ -1,51 +1,34 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Performance optimizations for Vercel
   experimental: {
-    // Enable modern React features
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    // Enable server components optimization
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
-  
-  // Image optimization
   images: {
-    unoptimized: false, // Enable image optimization
+    unoptimized: false,
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days cache
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  
-  // Static generation and caching
-  generateEtags: false, // Disable etags for better caching
-  compress: true, // Enable compression
-  
-  // Build optimizations
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Headers for better caching
+  generateEtags: false,
+  compress: true,
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
           },
         ],
       },
@@ -59,7 +42,7 @@ const nextConfig = {
         ],
       },
       {
-        source: '/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))',
+        source: '/:path*.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)',
         headers: [
           {
             key: 'Cache-Control',
@@ -69,20 +52,13 @@ const nextConfig = {
       },
     ]
   },
-  
-  // Webpack optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
       }
     }
     
